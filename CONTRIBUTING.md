@@ -29,8 +29,35 @@ Node 20 or newer and pnpm (see `packageManager` in package.json).
 
 ## Pull requests
 
-CI runs lint, types, tests on Node 20, 22 and 24, publint, arethetypeswrong and size-limit. Add a
-line to CHANGELOG.md under Unreleased.
+CI runs lint, types, tests on Node 20, 22 and 24, publint, arethetypeswrong and size-limit.
+Use a Conventional Commit title for the PR (it becomes the squash commit): do not edit
+CHANGELOG.md by hand, the release PR generates it.
+
+## Commits and releases
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat: ...` a new feature (minor bump)
+- `fix: ...` a bug fix (patch bump)
+- `docs: ...`, `chore: ...`, `test: ...`, `refactor: ...`, `perf: ...` no release by themselves
+  (`perf` and `fix` show in the changelog)
+- `feat!: ...` or a `BREAKING CHANGE:` footer: breaking change (while on 0.x this bumps minor)
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please):
+
+1. Every push to `main` updates one open "chore(main): release x.y.z" PR with the version bump in
+   package.json and the new CHANGELOG.md section.
+2. A maintainer merges that PR when ready to ship. This creates the tag `vX.Y.Z` and the GitHub
+   release.
+3. The publish job in `.github/workflows/release.yml` then runs `pnpm check` and
+   `npm publish --provenance --access public` (npm trusted publishing, environment `npm`). A
+   version already on npm is skipped.
+
+To force a version (for example 1.0.0), push an empty commit to `main` with the footer:
+
+```sh
+git commit --allow-empty -m "chore: release 1.0.0" -m "Release-As: 1.0.0"
+```
 
 ## Benchmark images
 

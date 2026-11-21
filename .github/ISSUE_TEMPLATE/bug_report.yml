@@ -1,0 +1,32 @@
+name: Bug report
+description: Something produces a wrong, broken or surprising result
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected and what you got. Attach the input image if you can (or a link).
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal code
+      description: The `quantize(...)` call and options that show it.
+      render: ts
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: pngmint version
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Runtime
+      description: Node, Deno, Bun or browser, with version.
+    validations:
+      required: true
