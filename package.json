@@ -1,0 +1,93 @@
+{
+  "name": "pigmint",
+  "version": "0.1.0",
+  "description": "Palette PNG quantizer in pure TypeScript: exact histogram, median cut, k-means, selective dithering and an indexed PNG writer. Small, deterministic, browser-first.",
+  "keywords": [
+    "png",
+    "quantize",
+    "quantization",
+    "palette",
+    "indexed",
+    "compress",
+    "image",
+    "median-cut",
+    "k-means",
+    "dithering",
+    "browser",
+    "typescript"
+  ],
+  "homepage": "https://github.com/konvetto/pigmint#readme",
+  "bugs": {
+    "url": "https://github.com/konvetto/pigmint/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/konvetto/pigmint.git"
+  },
+  "license": "MIT",
+  "author": "Konvetto (https://konvetto.com)",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@12.21.0",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "size": "size-limit",
+    "publint": "publint --strict",
+    "attw": "attw --pack . --profile esm-only",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm publint && pnpm attw && pnpm size",
+    "bench": "tsx bench/run.ts",
+    "bench:images": "tsx bench/fetch-images.ts",
+    "prepublishOnly": "pnpm check"
+  },
+  "dependencies": {
+    "fflate": "0.8.3"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@jsquash/oxipng": "2.3.0",
+    "@size-limit/preset-small-lib": "14.3.0",
+    "@types/node": "24.19.2",
+    "@types/pngjs": "6.0.5",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "10.15.0",
+    "image-q": "4.0.0",
+    "imagequant": "0.1.2",
+    "pngjs": "7.0.0",
+    "prettier": "3.10.1",
+    "publint": "0.3.25",
+    "sharp": "0.35.5",
+    "size-limit": "14.3.0",
+    "ssim.js": "3.5.0",
+    "tsup": "8.5.1",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "@types/upng-js": "2.1.5",
+    "upng-js": "2.1.0",
+    "vitest": "5.1.0"
+  }
+}

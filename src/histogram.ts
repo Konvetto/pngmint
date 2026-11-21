@@ -1,0 +1,152 @@
+/**
+ * The image's colours with their pixel counts: the palette is built from these, not from every
+ * pixel. Colours are premultiplied by alpha, so the hidden colour of a transparent pixel never
+ * takes a palette slot; all fully transparent pixels are one entry, kept apart (`clear`).
+ * An image with few colours (screenshots, flat art) keeps them exactly; past `EXACT` colours
+ * they are bucketed (6 bits per colour channel, 4 for alpha). Each bucket remembers how far its
+ * pixels spread around its mean (`spread`), so quality estimates stay honest.
+ */
+export interface Histogram {
+  /** Premultiplied RGBA per entry, 0-255 (mean of the pixels it holds). Never fully clear. */
+  r: Float64Array;
+  g: Float64Array;
+  b: Float64Array;
+  a: Float64Array;
+  count: Float64Array;
+  size: number;
+  /** Fully transparent pixels: one reserved palette entry when there are any. */
+  clear: number;
+  /** All pixels, clear ones included. */
+  pixels: number;
+  /** Squared error of the buckets' pixels around their means, per visible pixel (0 if exact). */
+  spread: number;
+  /** True when every visible colour is its own entry. */
+  exact: boolean;
+  /** No pixel is partly or fully transparent. */
+  opaque: boolean;
+}
+
+/** Up to this many distinct visible colours the histogram is exact. */
+export const EXACT = 8192;
+
+export type Rgba = Uint8Array | Uint8ClampedArray;
+
+/** A pixel's colour as a key: straight RGBA; every fully transparent pixel is 0. */
+export function colorKey(rgba: Rgba, i: number): number {
+  const a = rgba[i + 3]!;
+  return a === 0 ? 0 : ((rgba[i]! << 24) | (rgba[i + 1]! << 16) | (rgba[i + 2]! << 8) | a) >>> 0;
+}
+
+/** A coarse key, 6 bits per colour channel and 4 for alpha (22 bits): buckets and caches. */
+export const coarseKey = (r: number, g: number, b: number, a: number): number =>
+  ((r >> 2) << 16) | ((g >> 2) << 10) | ((b >> 2) << 4) | (a >> 4);
+
+/**
+ * The key's colour premultiplied by alpha, unrounded: what palette distances use, so a
+ * half-transparent colour comes back exactly.
+ */
+export function premul(key: number): [number, number, number, number] {
+  const a = key & 255,
+    k = a / 255;
+  return [(key >>> 24) * k, ((key >>> 16) & 255) * k, ((key >>> 8) & 255) * k, a];
+}
+
+export function histogram(rgba: Rgba, exactLimit = EXACT): Histogram {
+  return collect(rgba, exactLimit, true) ?? collect(rgba, Infinity, false)!;
+}
+
+/** Growable parallel sums, one slot per histogram entry. */
+class Sums {
+  r: Float64Array;
+  g: Float64Array;
+  b: Float64Array;
+  a: Float64Array;
+  n: Float64Array;
+  sq: Float64Array;
+  size = 0;
+
+  constructor(capacity: number) {
+    this.r = new Float64Array(capacity);
+    this.g = new Float64Array(capacity);
+    this.b = new Float64Array(capacity);
+    this.a = new Float64Array(capacity);
+    this.n = new Float64Array(capacity);
+    this.sq = new Float64Array(capacity);
+  }
+
+  grow(): void {
+    const next = this.r.length * 2;
+    for (const ch of ['r', 'g', 'b', 'a', 'n', 'sq'] as const) {
+      const bigger = new Float64Array(next);
+      bigger.set(this[ch]);
+      this[ch] = bigger;
+    }
+  }
+}
+
+function collect(rgba: Rgba, cap: number, exact: boolean): Histogram | undefined {
+  const index = new Map<number, number>();
+  const s = new Sums(exact ? 256 : 4096);
+  let clear = 0;
+  let opaque = true;
+  for (let i = 0; i < rgba.length; i += 4) {
+    const A = rgba[i + 3]!;
+    if (A === 0) {
+      clear++;
+      opaque = false;
+      continue;
+    }
+    if (A < 255) opaque = false;
+    const R = rgba[i]!,
+      G = rgba[i + 1]!,
+      B = rgba[i + 2]!;
+    const key = exact ? ((R << 24) | (G << 16) | (B << 8) | A) >>> 0 : coarseKey(R, G, B, A);
+    let at = index.get(key);
+    if (at === undefined) {
+      if (index.size >= cap) return undefined;
+      at = s.size++;
+      if (at === s.r.length) s.grow();
+      index.set(key, at);
+    }
+    const k = A / 255,
+      pr = R * k,
+      pg = G * k,
+      pb = B * k;
+    s.r[at]! += pr;
+    s.g[at]! += pg;
+    s.b[at]! += pb;
+    s.a[at]! += A;
+    s.n[at]! += 1;
+    if (!exact) s.sq[at]! += pr * pr + pg * pg + pb * pb + A * A;
+  }
+  const size = s.size;
+  const out: Histogram = {
+    r: new Float64Array(size),
+    g: new Float64Array(size),
+    b: new Float64Array(size),
+    a: new Float64Array(size),
+    count: s.n.slice(0, size),
+    size,
+    clear,
+    pixels: rgba.length / 4,
+    spread: 0,
+    exact,
+    opaque,
+  };
+  let spread = 0,
+    visible = 0;
+  for (let i = 0; i < size; i++) {
+    const c = s.n[i]!;
+    out.r[i] = s.r[i]! / c;
+    out.g[i] = s.g[i]! / c;
+    out.b[i] = s.b[i]! / c;
+    out.a[i] = s.a[i]! / c;
+    visible += c;
+    if (!exact) {
+      const mean = out.r[i]! ** 2 + out.g[i]! ** 2 + out.b[i]! ** 2 + out.a[i]! ** 2;
+      spread += Math.max(0, s.sq[i]! - c * mean);
+    }
+  }
+  out.spread = visible ? spread / visible : 0;
+  return out;
+}

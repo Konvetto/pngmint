@@ -1,0 +1,14 @@
+[
+  {
+    "name": "quantize (ESM, with fflate)",
+    "path": "dist/index.js",
+    "import": "{ quantize }",
+    "limit": "10 kB"
+  },
+  {
+    "name": "whole module, fflate external",
+    "path": "dist/index.js",
+    "ignore": ["fflate"],
+    "limit": "7 kB"
+  }
+]

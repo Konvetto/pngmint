@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+bench/images/
+bench/out/
+*.tgz
+.DS_Store
