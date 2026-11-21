@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.0](https://github.com/Konvetto/pngmint/compare/v0.1.0...v1.0.0) (2026-11-21)
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([a097f03](https://github.com/Konvetto/pngmint/commit/a097f03e5dca2d89b05aa2d3ee2d437963afc2b3))
+
 ## [0.1.0]
 
 First public release, extracted from the Compress PNG engine of konvetto.com.

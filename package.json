@@ -1,6 +1,6 @@
 {
   "name": "pngmint",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Palette PNG quantizer in pure TypeScript with zero dependencies: exact histogram, median cut, k-means, selective dithering and an indexed PNG writer. Small, deterministic, browser-first.",
   "keywords": [
     "png",
