@@ -47,13 +47,32 @@ Wall time, original module vs this package, same image and options (ms, lower is
 | alpha-wikiindaba-logo (4 MP)          | tiny preset            | 1013     | 217          |
 | photo-kodim03 (0.4 MP)                | 256 colours            | 155      | 141          |
 
-The 14 MP photo went from about 2.7 s to see `bench/out/results.md` after `pnpm bench`.
+The 14 MP photo takes 2.1 s at 256 colours in the benchmark (fflate hook or default compressor alike; the time is in the histogram and the remap), against about 2.7 s measured for the original module under the same conditions.
 
 Output bytes differ slightly from the original in two cases, both intended: pruned palette entries
 (finding 4) and the narrower quality floor (finding 5). Ties in nearest-colour search can also
 resolve differently because the search now starts from the previous answer; the chosen colour is at
 the same distance, so quality is unchanged. Outputs are byte-identical where none of this applies
 (`alpha-computer-icon.png` at every setting, several others at 64 and 256 colours).
+
+## Dropping fflate
+
+Asked for: zero runtime dependencies. Measured on the 14 benchmark images at the `quality` and
+`tiny` presets (28 files), same palette and indices, only the compressor differs:
+
+| Compressor                               | Total bytes | Relative |   Time |
+| ---------------------------------------- | ----------: | -------: | -----: |
+| fflate level 9 (the original engine)     | 17 920.6 kB |    1.000 | 12.6 s |
+| fflate level 6 (the original above 4 MP) | 18 144.8 kB |    +1.3% |  6.6 s |
+| `CompressionStream('deflate')`, Node 26  | 18 362.3 kB |    +2.5% |  5.0 s |
+
+Per image the native stream costs +1 to +3 percent on photos, +6 to +9 percent on screenshots and
+up to +45 percent on a 3.6 kB icon (1.5 kB more). It is as fast as fflate at level 6 and its bytes
+depend on the engine's zlib, so file bytes are no longer identical across platforms (palette and
+indices still are). Decision: the package ships with zero dependencies and the native stream as the
+default, and a `deflate` option takes any zlib compressor. Konvetto already ships fflate and passes
+`(raw) => zlibSync(raw, { level: 9 })`, which gives exactly the previous files and keeps the
+synchronous call (`quantizeSync`). The benchmark tables measure that configuration.
 
 ## Things checked and found correct
 

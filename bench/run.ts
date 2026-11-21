@@ -5,16 +5,17 @@
  * (premultiplied RGB, plus alpha when the source has any), SSIM (grayscale, over white) and
  * wall time (median of up to 3 runs after a warm-up).
  *
- * Usage: pnpm bench [--colors 256,64] [--only kodim] [--max-mp 8] [--runs 3]
- * Results: bench/out/results.json and bench/out/results.md
+ * Usage: pnpm bench [--colors 256,64] [--only kodim] [--max-mp 8] [--runs 3] [--libs name,name]
+ * Results: bench/out/results.json and bench/out/results.md. With --libs or --only, rows of the
+ * other libraries and images are kept from the previous results.json.
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { quantizeSync } from '../src/index.js';
-import { contenders, deflate, NAME, type Contender } from './lib/contenders.js';
+import { quantize } from '../src/index.js';
+import { contenders, NAME, type Contender } from './lib/contenders.js';
 import { psnr, ssimOverWhite } from './lib/metrics.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -25,6 +26,7 @@ const colorSteps = (args.get('--colors') ?? '256,128,64,32').split(',').map(Numb
 const only = args.get('--only');
 const maxMp = Number(args.get('--max-mp') ?? Infinity);
 const runs = Number(args.get('--runs') ?? 3);
+const libs = args.get('--libs')?.split(',');
 
 interface Manifest {
   images: { file: string; kind: string; license: string; source: string }[];
@@ -45,9 +47,20 @@ export interface Row {
   note?: string;
 }
 
-const rows: Row[] = [];
 const outDir = join(here, 'out');
 await mkdir(outDir, { recursive: true });
+const active = contenders.filter((c) => !libs || libs.includes(c.name));
+const isPreset = (r: Row) => r.library.startsWith(`${NAME}:`);
+const runsPresets = !libs || libs.includes(NAME);
+// A partial run keeps the rows it does not redo.
+const previous: Row[] = await readFile(join(outDir, 'results.json'), 'utf8')
+  .then((t) => (JSON.parse(t) as { rows: Row[] }).rows)
+  .catch(() => []);
+const rows: Row[] = previous.filter(
+  (r) =>
+    (only !== undefined && !r.image.includes(only)) ||
+    !(active.some((c) => c.name === r.library) || (runsPresets && isPreset(r))),
+);
 
 async function timeIt(fn: () => Promise<Uint8Array> | Uint8Array) {
   const times: number[] = [];
@@ -65,7 +78,7 @@ async function timeIt(fn: () => Promise<Uint8Array> | Uint8Array) {
 // Warm-up on a tiny image so JIT and wasm start-up stay out of the numbers.
 {
   const tiny = new Uint8Array(32 * 32 * 4).map((_, i) => (i % 4 === 3 ? 255 : (i * 7) & 255));
-  for (const c of contenders) if (c.lossy) await c.run(tiny, 32, 32, 16);
+  for (const c of active) if (c.lossy) await c.run(tiny, 32, 32, 16);
 }
 
 for (const image of manifest.images) {
@@ -127,21 +140,21 @@ for (const image of manifest.images) {
     );
   };
 
-  for (const c of contenders) {
+  for (const c of active) {
     if (!c.lossy) {
       await measure(c, 0);
       continue;
     }
     for (const colors of colorSteps) await measure(c, colors);
   }
-  // The production presets, which also shrink the palette while the quality holds.
-  {
+  // The presets, which also shrink the palette while the quality holds (default compressor).
+  if (runsPresets) {
     const { presets } = await import('../src/index.js');
     for (const [name, preset] of Object.entries(presets)) {
-      const r = await timeIt(() => quantizeSync(rgba, width, height, { ...preset, deflate }).png);
+      const r = await timeIt(async () => (await quantize(rgba, width, height, preset)).png);
       const decoded = await sharp(Buffer.from(r.out)).ensureAlpha().raw().toBuffer();
       const back = new Uint8Array(decoded.buffer, decoded.byteOffset, decoded.byteLength);
-      const q = quantizeSync(rgba, width, height, { ...preset, deflate });
+      const q = await quantize(rgba, width, height, preset);
       rows.push({
         image: image.file,
         kind: image.kind,

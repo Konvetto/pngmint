@@ -20,7 +20,8 @@ Node 20 or newer and pnpm (see `packageManager` in package.json).
   `pnpm bench`, not from looking at one image.
 - Output must stay deterministic: the same input and options give the same bytes on every run and
   platform. No `Math.random`, no time, no locale.
-- No new runtime dependencies. fflate is the only one, pinned to an exact version.
+- No runtime dependencies. fflate stays a devDependency for tests and the benchmark; the
+  `deflate` option is how callers bring it in.
 - No wasm, no Node-only APIs in `src/`. The package runs in browsers, Web Workers, Node, Deno and
   Bun from the same ESM file.
 - Keep the public API small. New options need a reason that a preset cannot cover.

@@ -8,14 +8,15 @@ import { readFile } from 'node:fs/promises';
 import * as iq from 'image-q';
 import UPNG from 'upng-js';
 import { zlibSync } from 'fflate';
-import { quantizeSync } from '../../src/index.js';
+import { quantize, quantizeSync } from '../../src/index.js';
 import pkg from '../../package.json' with { type: 'json' };
 
 /** The package name, so that renaming the package touches package.json and README only. */
 export const NAME: string = pkg.name;
 
-/** fflate at level 9: what Konvetto passes in production and what the tables measure. */
+/** fflate at level 9: the optional deflate hook Konvetto passes in production. */
 export const deflate = (raw: Uint8Array): Uint8Array => zlibSync(raw, { level: 9 });
+export const HOOKED = `${NAME} (fflate hook)`;
 
 const require = createRequire(import.meta.url);
 
@@ -36,9 +37,19 @@ export interface Contender {
 const dither = (colors: number) =>
   colors >= 256 ? 0 : colors >= 128 ? 0.4 : colors >= 64 ? 0.65 : 0.6;
 
+/** The default install: no options beyond colours and dithering, CompressionStream for deflate. */
 const pigmint: Contender = {
   name: NAME,
   lossy: true,
+  run: async (rgba, w, h, colors) =>
+    (await quantize(rgba, w, h, { maxColors: colors, dither: dither(colors) })).png,
+};
+
+/** The same palette and pixels, compressed through the optional deflate hook with fflate level 9. */
+const pigmintHooked: Contender = {
+  name: HOOKED,
+  lossy: true,
+  note: `${HOOKED}: identical pixels to ${NAME}, IDAT from fflate zlibSync level 9 through the deflate option`,
   run: (rgba, w, h, colors) =>
     quantizeSync(rgba, w, h, { maxColors: colors, dither: dither(colors), deflate }).png,
 };
@@ -55,7 +66,7 @@ const upng: Contender = {
 const imageQ: Contender = {
   name: 'image-q',
   lossy: true,
-  note: 'wuquant + floyd-steinberg; image-q has no PNG writer, its pixels are written losslessly by this package',
+  note: 'wuquant + floyd-steinberg; image-q has no PNG writer, its pixels are written losslessly by this package with the fflate hook',
   run: (rgba, w, h, colors) => {
     const pc = iq.utils.PointContainer.fromUint8Array(rgba, w, h);
     const palette = iq.buildPaletteSync([pc], { colors, paletteQuantization: 'wuquant' });
@@ -127,4 +138,11 @@ const oxipng: Contender = {
   run: async (rgba, w, h) => (await loadOxipng())(new Uint8ClampedArray(rgba), w, h),
 };
 
-export const contenders: Contender[] = [pigmint, upng, imageQ, libimagequant, oxipng];
+export const contenders: Contender[] = [
+  pigmint,
+  pigmintHooked,
+  upng,
+  imageQ,
+  libimagequant,
+  oxipng,
+];

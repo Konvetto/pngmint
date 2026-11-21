@@ -1,5 +1,5 @@
 /** Markdown tables from benchmark rows: a summary per colour count and the full per-image table. */
-import { NAME } from './contenders.js';
+import { HOOKED, NAME } from './contenders.js';
 import type { Row } from '../run.js';
 
 const kb = (b: number) => (b / 1024).toFixed(1);
@@ -7,7 +7,9 @@ const db = (v: number) => (v === Infinity ? 'lossless' : v.toFixed(2));
 const geo = (xs: number[]) => Math.exp(xs.reduce((s, x) => s + Math.log(x), 0) / xs.length);
 const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
 
-export function report(rows: Row[]): string {
+export function report(input: Row[]): string {
+  // JSON has no Infinity: a lossless PSNR comes back from results.json as null.
+  const rows = input.map((r) => ({ ...r, psnr: (r.psnr as number | null) ?? Infinity }));
   const ok = rows.filter((r) => !r.note?.startsWith('failed'));
   const libs = [...new Set(ok.map((r) => r.library))].filter(
     (l) => !l.startsWith(`${NAME}:`) && l !== 'oxipng',
@@ -23,29 +25,43 @@ export function report(rows: Row[]): string {
     '',
   );
   lines.push(
-    '| Colours | Library | Images | Size ratio | PSNR diff (dB) | SSIM diff | Time ratio |',
+    `${NAME} rows are the default install (CompressionStream). "${HOOKED}" is the same output compressed through the optional deflate hook with fflate level 9: shown apart, never mixed into the ${NAME} numbers.`,
+    '',
   );
-  lines.push('|---:|---|---:|---:|---:|---:|---:|');
+  lines.push(
+    'Photos are the five photographs; graphics are the screenshots, illustrations, logos and pixel art, where most libraries land above 45 dB and dB differences mean little.',
+    '',
+  );
+  lines.push(
+    '| Colours | Library | Set | Images | Size ratio | PSNR diff (dB) | SSIM diff | Time ratio |',
+  );
+  lines.push('|---:|---|---|---:|---:|---:|---:|---:|');
+  const sets: [string, (r: Row) => boolean][] = [
+    ['photos', (r) => r.kind === 'photo'],
+    ['graphics', (r) => r.kind !== 'photo'],
+  ];
   for (const colors of colorSteps) {
     for (const lib of libs) {
       if (lib === NAME) continue;
-      const pairs = ok
-        .filter((r) => r.library === lib && r.colors === colors)
-        .map(
-          (r) =>
-            [
-              r,
-              ok.find((p) => p.library === NAME && p.image === r.image && p.colors === colors),
-            ] as const,
-        )
-        .filter((pair): pair is readonly [Row, Row] => {
-          const [r, p] = pair;
-          return p !== undefined && r.psnr !== Infinity && p.psnr !== Infinity;
-        });
-      if (!pairs.length) continue;
-      lines.push(
-        `| ${colors} | ${lib} | ${pairs.length} | ${geo(pairs.map(([r, p]) => r.bytes / p.bytes)).toFixed(2)} | ${signed(mean(pairs.map(([r, p]) => r.psnr - p.psnr)), 2)} | ${signed(mean(pairs.map(([r, p]) => r.ssim - p.ssim)), 4)} | ${geo(pairs.map(([r, p]) => r.ms / p.ms)).toFixed(2)} |`,
-      );
+      for (const [set, inSet] of sets) {
+        const pairs = ok
+          .filter((r) => r.library === lib && r.colors === colors && inSet(r))
+          .map(
+            (r) =>
+              [
+                r,
+                ok.find((p) => p.library === NAME && p.image === r.image && p.colors === colors),
+              ] as const,
+          )
+          .filter((pair): pair is readonly [Row, Row] => {
+            const [r, p] = pair;
+            return p !== undefined && r.psnr !== Infinity && p.psnr !== Infinity;
+          });
+        if (!pairs.length) continue;
+        lines.push(
+          `| ${colors} | ${lib} | ${set} | ${pairs.length} | ${geo(pairs.map(([r, p]) => r.bytes / p.bytes)).toFixed(2)} | ${signed(mean(pairs.map(([r, p]) => r.psnr - p.psnr)), 2)} | ${signed(mean(pairs.map(([r, p]) => r.ssim - p.ssim)), 4)} | ${geo(pairs.map(([r, p]) => r.ms / p.ms)).toFixed(2)} |`,
+        );
+      }
     }
   }
   lines.push('');
