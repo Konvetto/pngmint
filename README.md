@@ -1,3 +1,5 @@
+<a href="https://konvetto.com/images/compress-png"><img src="https://raw.githubusercontent.com/Konvetto/pngmint/main/.github/assets/social-preview.png" alt="pngmint: palette PNGs that stay sharp. Try it free on konvetto.com" width="100%"></a>
+
 # pngmint
 
 **Palette PNGs that stay sharp. Pure TypeScript, zero dependencies, 5 kB, no wasm.**
