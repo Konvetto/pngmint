@@ -42,14 +42,29 @@ describe('quantize: lossless cases', () => {
       const w = 61,
         h = 23;
       const rgba = flat(w, h, colors);
-      const q = quantize(rgba, w, h, { maxColors: 256, dither: 1, minQuality: 30 });
+      const q = quantize(rgba, w, h, { maxColors: 256, dither: 1 });
       expect(q.colors).toBe(n);
       expect(q.exact).toBe(true);
       const png = readPng(q.png);
       expect(png.depth).toBe(n <= 2 ? 1 : n <= 4 ? 2 : n <= 16 ? 4 : 8);
       expectSamePixels(rgba, png.rgba);
+      // With a quality floor the palette may shrink, but only while the floor holds.
+      const floored = quantize(rgba, w, h, { maxColors: 256, minQuality: 30 });
+      expect(floored.colors).toBeLessThanOrEqual(n);
+      expect(floored.quality).toBeGreaterThanOrEqual(30);
     });
   }
+
+  it('the quality floor narrows down to the fewest colours that hold it', () => {
+    const rgba = gradient(256, 8, [0, 0, 0], [255, 255, 255]);
+    const q = quantize(rgba, 256, 8, { maxColors: 256, minQuality: 40 });
+    expect(q.quality).toBeGreaterThanOrEqual(40);
+    // One colour fewer (built the same quick way) would not hold.
+    const fewer = createPalette(rgba, { maxColors: q.colors - 1, rounds: 1 });
+    expect(fewer.quality).toBeLessThan(40);
+    // Not a power of two away from the cap: the search did more than halve.
+    expect([128, 64, 32, 16, 8, 4, 2]).not.toContain(q.colors);
+  });
 
   it('257 colours are quantized to 256', () => {
     const make = (n: number) => {
@@ -309,6 +324,18 @@ describe('validation', () => {
       RangeError,
     );
     expect(() => encodeIndexedPng(2, 2, new Uint8Array(4), new Uint8Array(3))).toThrow(RangeError);
+    expect(() => encodeIndexedPng(0, 2, new Uint8Array(4), new Uint8Array(0))).toThrow(RangeError);
+    expect(() => encodeIndexedPng(2 ** 31, 1, new Uint8Array(4), new Uint8Array(0))).toThrow(
+      RangeError,
+    );
+    expect(() => encodeIndexedPng(2, 2, new Uint8Array(6), new Uint8Array(4))).toThrow(RangeError);
+    expect(() => encodeIndexedPng(2, 2, new Uint8Array(4), [0, 0, 0, 0] as never)).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      encodeIndexedPng(2, 2, new Uint8Array(4), new Uint8Array(4), { level: 11 as never }),
+    ).toThrow(RangeError);
+    expect(() => createPalette([1, 2, 3, 4] as never)).toThrow(TypeError);
   });
 });
 

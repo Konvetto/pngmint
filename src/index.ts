@@ -170,15 +170,36 @@ function buildPalette(h: Histogram, o: PaletteOptions): Built {
 
   let colors = Math.max(1, Math.min(maxColors - reserved, h.size));
   // Fewer colours while the quality holds, tried with a quick palette (one k-means round,
-  // about 0.3 dB below the final one, which leaves a margin).
+  // about 0.3 dB below the final one, which leaves a margin): halve while it holds, then
+  // narrow down between the last count that held and the first that did not.
+  const holds = (n: number) => quality(build(n, 1).error) >= (o.minQuality ?? -Infinity);
+  let passed = false; // `colors` is known to hold
+  let failed = 1; // the largest count known not to hold (1: none yet)
   if (o.minQuality !== undefined) {
     while (colors > 2) {
       const fewer = Math.max(2, Math.floor(colors / 2));
-      if (quality(build(fewer, 1).error) < o.minQuality) break;
+      if (!holds(fewer)) {
+        failed = fewer;
+        break;
+      }
       colors = fewer;
+      passed = true;
     }
   }
-  const best = build(colors, o.rounds ?? 2);
+  let best = build(colors, o.rounds ?? 2);
+  if (o.minQuality !== undefined && failed > 1 && (passed || quality(best.error) >= o.minQuality)) {
+    let lo = failed,
+      hi = colors;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (holds(mid)) hi = mid;
+      else lo = mid;
+    }
+    if (hi < colors) {
+      colors = hi;
+      best = build(colors, o.rounds ?? 2);
+    }
+  }
   const palette = emptyPalette(best.p.size + reserved);
   for (const ch of ['r', 'g', 'b', 'a'] as const) palette[ch].set(best.p[ch]);
   // The reserved colour is (0, 0, 0, 0): all zeros already, and sorted first by `finish`.

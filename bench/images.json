@@ -1,0 +1,117 @@
+{
+  "note": "Benchmark image set. Every file is public domain or CC0. `pnpm bench:images` downloads them into bench/images/ (not committed). Kodak images: 'Kodak Lossless True Color Image Suite', released by Eastman Kodak for unrestricted use. Wikimedia Commons files: CC0 1.0 by their uploaders, see each source page.",
+  "images": [
+    {
+      "file": "photo-kodim03-hats.png",
+      "kind": "photo",
+      "url": "https://r0k.us/graphics/kodak/kodak/kodim03.png",
+      "source": "https://r0k.us/graphics/kodak/",
+      "license": "Kodak, unrestricted use",
+      "author": "Eastman Kodak"
+    },
+    {
+      "file": "photo-kodim15-face.png",
+      "kind": "photo",
+      "url": "https://r0k.us/graphics/kodak/kodak/kodim15.png",
+      "source": "https://r0k.us/graphics/kodak/",
+      "license": "Kodak, unrestricted use",
+      "author": "Eastman Kodak"
+    },
+    {
+      "file": "photo-kodim23-parrots.png",
+      "kind": "photo",
+      "url": "https://r0k.us/graphics/kodak/kodak/kodim23.png",
+      "source": "https://r0k.us/graphics/kodak/",
+      "license": "Kodak, unrestricted use",
+      "author": "Eastman Kodak"
+    },
+    {
+      "file": "photo-dordogne-14mp.jpg",
+      "kind": "photo",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "photo-budapest-night-7mp.jpg",
+      "kind": "photo",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Sz%C3%A9chenyi_Chain_Bridge_in_Budapest_at_night.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Sz%C3%A9chenyi_Chain_Bridge_in_Budapest_at_night.jpg",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "screenshot-wikipedia-history.png",
+      "kind": "screenshot",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/2025-01-25_screenshot_wikipedia_history_default.png",
+      "source": "https://commons.wikimedia.org/wiki/File:2025-01-25_screenshot_wikipedia_history_default.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "screenshot-wikidata-dialog.png",
+      "kind": "screenshot",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/00/Wikidata_screenshot_add_reference_choose_ref_type_2025_en.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Wikidata_screenshot_add_reference_choose_ref_type_2025_en.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "screenshot-arc-browser.png",
+      "kind": "screenshot",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Screenshot_Arc_Browser.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Screenshot_Arc_Browser.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "illustration-goyave.png",
+      "kind": "illustration",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Illustration_graphique_de_Goyave.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Illustration_graphique_de_Goyave.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "illustration-village.png",
+      "kind": "illustration",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Illustration_d%27un_village.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Illustration_d%27un_village.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "illustration-venn-diagram.png",
+      "kind": "illustration",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Indieweb_oldweb_smallweb_venn_diagram_2025.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Indieweb_oldweb_smallweb_venn_diagram_2025.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "alpha-computer-icon.png",
+      "kind": "transparency",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Device-computer-icon.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Device-computer-icon.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "alpha-wikiindaba-logo.png",
+      "kind": "transparency",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Logo_Wikiindaba_logotype_ENG.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Logo_Wikiindaba_logotype_ENG.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    },
+    {
+      "file": "pixelart-bird.png",
+      "kind": "pixel art",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/22/Bird_Pixel_art_1.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Bird_Pixel_art_1.png",
+      "license": "CC0 1.0",
+      "author": "see source page"
+    }
+  ]
+}

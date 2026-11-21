@@ -5,7 +5,7 @@
  * there it only adds noise and bytes. Fully transparent pixels always take the clear colour,
  * and no error passes through them.
  */
-import { coarseKey, colorKey, premul, type Rgba } from './histogram.js';
+import { colorKey, premul, type Rgba } from './histogram.js';
 import { nearest, type Palette } from './palette.js';
 
 /** Step between neighbours (premultiplied luma or alpha) above which a pixel is an edge. */
@@ -15,9 +15,6 @@ const EDGE = 18;
  * colours far from every palette entry are not dithered (grey 100 between black and white).
  */
 const CLAMP = 24;
-/** Colours remembered by exact matching before the memory is emptied. */
-const MAX_CACHE = 1_000_000;
-
 /** Luma of every pixel as seen, premultiplied: a nearly clear pixel's hidden colour counts little. */
 function lumas(rgba: Rgba, pixels: number): Float32Array {
   const out = new Float32Array(pixels);
@@ -58,20 +55,33 @@ export function edges(rgba: Rgba, width: number, height: number): Uint8Array {
 }
 
 /**
- * Nearest palette colour per premultiplied colour, keyed coarsely (6/6/6/4 bits): a fixed 8 MB,
- * however many colours the image has.
+ * A direct-mapped cache from a 32-bit colour key to a palette index: one slot per hash, the
+ * newer colour replaces the older. Bounded memory however many colours the image has.
  */
-function coarseCache(p: Palette) {
-  const slots = new Int16Array(1 << 22).fill(-1);
-  return (r: number, g: number, b: number, a: number) => {
-    const key = coarseKey(r, g, b, a);
-    let k = slots[key]!;
-    if (k < 0) {
-      k = nearest(p, r, g, b, a);
-      slots[key] = k;
-    }
-    return k;
-  };
+class MatchCache {
+  private readonly keys: Uint32Array;
+  private readonly values: Int16Array;
+  private readonly shift: number;
+
+  constructor(pixels: number) {
+    let bits = 10;
+    while (bits < 20 && 1 << bits < pixels * 2) bits++;
+    this.keys = new Uint32Array(1 << bits);
+    this.values = new Int16Array(1 << bits).fill(-1);
+    this.shift = 32 - bits;
+  }
+
+  /** The index stored for `key`, or -1. */
+  get(key: number): number {
+    const slot = Math.imul(key, 0x9e3779b1) >>> this.shift;
+    return this.keys[slot] === key ? this.values[slot]! : -1;
+  }
+
+  set(key: number, value: number): void {
+    const slot = Math.imul(key, 0x9e3779b1) >>> this.shift;
+    this.keys[slot] = key;
+    this.values[slot] = value;
+  }
 }
 
 export interface RemapOptions {
@@ -90,17 +100,17 @@ export function remap(
 ): Uint8Array {
   const out = new Uint8Array(width * height);
   const clear = o.clear ?? nearest(p, 0, 0, 0, 0);
-  // Every colour matched exactly, remembered per colour; the memory is emptied past a million
-  // colours, so a huge noisy image cannot grow it without bound.
-  const map = new Map<number, number>();
+  // Every colour matched exactly and remembered by its exact key. On a miss the search starts
+  // from the last answer, which for a neighbouring pixel is usually right or close.
+  const exact = new MatchCache(width * height);
+  let last = 0;
   const match = (key: number) => {
-    let k = map.get(key);
-    if (k === undefined) {
-      if (map.size >= MAX_CACHE) map.clear();
-      k = nearest(p, ...premul(key));
-      map.set(key, k);
+    let k = exact.get(key);
+    if (k < 0) {
+      k = nearest(p, ...premul(key), last);
+      exact.set(key, k);
     }
-    return k;
+    return (last = k);
   };
   if (o.dither <= 0) {
     for (let i = 0, j = 0; i < rgba.length; i += 4, j++) {
@@ -110,8 +120,18 @@ export function remap(
     return out;
   }
 
-  // Dithered colours are new every pixel: matched through the bounded coarse cache.
-  const near = coarseCache(p);
+  // Dithered colours are new every pixel: matched by their premultiplied bytes (rounded, at most
+  // half a level off) through a cache of their own.
+  const dithered = new MatchCache(width * height);
+  const near = (r: number, g: number, b: number, a: number) => {
+    const key = (((r + 0.5) << 24) | ((g + 0.5) << 16) | ((b + 0.5) << 8) | (a + 0.5)) >>> 0;
+    let k = dithered.get(key);
+    if (k < 0) {
+      k = nearest(p, r, g, b, a, last);
+      dithered.set(key, k);
+    }
+    return (last = k);
+  };
   const edge = edges(rgba, width, height);
   // Error rows, 4 channels, one pixel of padding on each side.
   let cur = new Float32Array((width + 2) * 4);

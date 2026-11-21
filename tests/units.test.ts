@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coarseKey, colorKey, histogram, premul } from '../src/histogram.js';
+import { coarseKey, colorKey, histogram, KeyIndex, premul } from '../src/histogram.js';
 import {
   distance,
   emptyPalette,
@@ -74,6 +74,16 @@ describe('histogram', () => {
     const h = histogram(rgba);
     expect(h.size).toBe(n);
     expect([...h.count].every((c) => c === 1)).toBe(true);
+  });
+
+  it('KeyIndex grows past its capacity and keeps every key', () => {
+    const index = new KeyIndex(4);
+    for (let k = 1; k <= 5000; k++) index.set((k * 2654435761) >>> 0, k);
+    expect(index.size).toBe(5000);
+    for (let k = 1; k <= 5000; k++) expect(index.get((k * 2654435761) >>> 0)).toBe(k);
+    expect(index.get(7)).toBe(-1);
+    index.set(2654435761, 99); // overwrite keeps the size
+    expect([index.get(2654435761), index.size]).toEqual([99, 5000]);
   });
 
   it('copes with an image of only clear pixels', () => {

@@ -1,0 +1,113 @@
+/** Markdown tables from benchmark rows: a summary per colour count and the full per-image table. */
+import type { Row } from '../run.js';
+
+const kb = (b: number) => (b / 1024).toFixed(1);
+const db = (v: number) => (v === Infinity ? 'lossless' : v.toFixed(2));
+const geo = (xs: number[]) => Math.exp(xs.reduce((s, x) => s + Math.log(x), 0) / xs.length);
+const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
+
+export function report(rows: Row[]): string {
+  const ok = rows.filter((r) => !r.note?.startsWith('failed'));
+  const libs = [...new Set(ok.map((r) => r.library))].filter(
+    (l) => !l.startsWith('pigmint:') && l !== 'oxipng',
+  );
+  const colorSteps = [
+    ...new Set(ok.filter((r) => r.library === 'pigmint').map((r) => r.colors)),
+  ].sort((a, b) => b - a);
+  const lines: string[] = [];
+
+  lines.push('## Summary: other libraries relative to pigmint, same colour count', '');
+  lines.push(
+    'Size ratio is the geometric mean of (library bytes / pigmint bytes): below 1.00 means the other library is smaller. PSNR and SSIM are mean differences (library minus pigmint): below 0 means pigmint is closer to the original. Time ratio is the geometric mean of (library ms / pigmint ms).',
+    '',
+  );
+  lines.push(
+    '| Colours | Library | Images | Size ratio | PSNR diff (dB) | SSIM diff | Time ratio |',
+  );
+  lines.push('|---:|---|---:|---:|---:|---:|---:|');
+  for (const colors of colorSteps) {
+    for (const lib of libs) {
+      if (lib === 'pigmint') continue;
+      const pairs = ok
+        .filter((r) => r.library === lib && r.colors === colors)
+        .map(
+          (r) =>
+            [
+              r,
+              ok.find((p) => p.library === 'pigmint' && p.image === r.image && p.colors === colors),
+            ] as const,
+        )
+        .filter((pair): pair is readonly [Row, Row] => {
+          const [r, p] = pair;
+          return p !== undefined && r.psnr !== Infinity && p.psnr !== Infinity;
+        });
+      if (!pairs.length) continue;
+      lines.push(
+        `| ${colors} | ${lib} | ${pairs.length} | ${geo(pairs.map(([r, p]) => r.bytes / p.bytes)).toFixed(2)} | ${signed(mean(pairs.map(([r, p]) => r.psnr - p.psnr)), 2)} | ${signed(mean(pairs.map(([r, p]) => r.ssim - p.ssim)), 4)} | ${geo(pairs.map(([r, p]) => r.ms / p.ms)).toFixed(2)} |`,
+      );
+    }
+  }
+  lines.push('');
+
+  lines.push('## Wins and losses per image (PSNR at the same colour count)', '');
+  lines.push(
+    '| Colours | Library | pigmint closer | other closer | pigmint smaller | other smaller |',
+  );
+  lines.push('|---:|---|---:|---:|---:|---:|');
+  for (const colors of colorSteps) {
+    for (const lib of libs) {
+      if (lib === 'pigmint') continue;
+      let closer = 0,
+        farther = 0,
+        smaller = 0,
+        bigger = 0;
+      for (const r of ok.filter((r) => r.library === lib && r.colors === colors)) {
+        const p = ok.find(
+          (p) => p.library === 'pigmint' && p.image === r.image && p.colors === colors,
+        );
+        if (!p || r.psnr === Infinity || p.psnr === Infinity) continue;
+        if (p.psnr > r.psnr + 0.05) closer++;
+        else if (r.psnr > p.psnr + 0.05) farther++;
+        if (p.bytes < r.bytes) smaller++;
+        else if (r.bytes < p.bytes) bigger++;
+      }
+      if (closer + farther + smaller + bigger)
+        lines.push(`| ${colors} | ${lib} | ${closer} | ${farther} | ${smaller} | ${bigger} |`);
+    }
+  }
+  lines.push('');
+
+  lines.push('## Presets', '');
+  lines.push('| Image | Preset | Colours | kB | PSNR (dB) | SSIM | ms |');
+  lines.push('|---|---|---:|---:|---:|---:|---:|');
+  for (const r of ok.filter((r) => r.library.startsWith('pigmint:')))
+    lines.push(
+      `| ${r.image} | ${r.library.slice(8)} | ${r.colors} | ${kb(r.bytes)} | ${db(r.psnr)} | ${r.ssim.toFixed(4)} | ${r.ms.toFixed(0)} |`,
+    );
+  lines.push('');
+
+  lines.push('## Every run', '');
+  lines.push('| Image | Size | Colours | Library | kB | PSNR (dB) | SSIM | ms |');
+  lines.push('|---|---|---:|---|---:|---:|---:|---:|');
+  for (const r of rows.filter((r) => !r.library.startsWith('pigmint:'))) {
+    if (r.note?.startsWith('failed')) {
+      lines.push(
+        `| ${r.image} | ${r.width}x${r.height} | ${r.colors || ''} | ${r.library} | ${r.note} | | | |`,
+      );
+      continue;
+    }
+    lines.push(
+      `| ${r.image} | ${r.width}x${r.height} | ${r.colors || 'lossless'} | ${r.library} | ${kb(r.bytes)} | ${db(r.psnr)} | ${r.ssim.toFixed(4)} | ${r.ms.toFixed(0)} |`,
+    );
+  }
+  lines.push('');
+  const notes = [
+    ...new Set(rows.map((r) => r.note).filter((n): n is string => !!n && !n.startsWith('failed'))),
+  ];
+  if (notes.length) lines.push('Notes:', '', ...notes.map((n) => `- ${n}`), '');
+  return lines.join('\n');
+}
+
+function signed(v: number, digits: number): string {
+  return (v >= 0 ? '+' : '') + v.toFixed(digits);
+}

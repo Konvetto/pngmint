@@ -84,8 +84,59 @@ class Sums {
   }
 }
 
+/** Open addressing from a non-zero 32-bit key to an entry number; faster than a Map here. */
+export class KeyIndex {
+  private keys: Uint32Array;
+  private values: Int32Array;
+  private shift: number;
+  size = 0;
+
+  constructor(capacity = 1024) {
+    let bits = 10;
+    while (1 << bits < capacity * 2) bits++;
+    this.keys = new Uint32Array(1 << bits);
+    this.values = new Int32Array(1 << bits);
+    this.shift = 32 - bits;
+  }
+
+  /** The entry for `key` (never 0), or -1. */
+  get(key: number): number {
+    const mask = this.keys.length - 1;
+    let slot = Math.imul(key, 0x9e3779b1) >>> this.shift;
+    for (;;) {
+      const k = this.keys[slot]!;
+      if (k === key) return this.values[slot]!;
+      if (k === 0) return -1;
+      slot = (slot + 1) & mask;
+    }
+  }
+
+  set(key: number, value: number): void {
+    if (this.size * 2 >= this.keys.length) this.grow();
+    const mask = this.keys.length - 1;
+    let slot = Math.imul(key, 0x9e3779b1) >>> this.shift;
+    while (this.keys[slot] !== 0 && this.keys[slot] !== key) slot = (slot + 1) & mask;
+    if (this.keys[slot] === 0) this.size++;
+    this.keys[slot] = key;
+    this.values[slot] = value;
+  }
+
+  private grow(): void {
+    const keys = this.keys,
+      values = this.values;
+    this.keys = new Uint32Array(keys.length * 2);
+    this.values = new Int32Array(keys.length * 2);
+    this.shift--;
+    this.size = 0;
+    for (let i = 0; i < keys.length; i++) if (keys[i] !== 0) this.set(keys[i]!, values[i]!);
+  }
+}
+
 function collect(rgba: Rgba, cap: number, exact: boolean): Histogram | undefined {
-  const index = new Map<number, number>();
+  // Exact keys (never 0 for a visible pixel) go through a hash; coarse keys (22 bits) index a
+  // table directly: 16 MB for the time of the call, and no hashing per pixel.
+  const hash = exact ? new KeyIndex(Math.min(cap, 1 << 16)) : undefined;
+  const direct = exact ? undefined : new Int32Array(1 << 22).fill(-1);
   const s = new Sums(exact ? 256 : 4096);
   let clear = 0;
   let opaque = true;
@@ -100,13 +151,24 @@ function collect(rgba: Rgba, cap: number, exact: boolean): Histogram | undefined
     const R = rgba[i]!,
       G = rgba[i + 1]!,
       B = rgba[i + 2]!;
-    const key = exact ? ((R << 24) | (G << 16) | (B << 8) | A) >>> 0 : coarseKey(R, G, B, A);
-    let at = index.get(key);
-    if (at === undefined) {
-      if (index.size >= cap) return undefined;
-      at = s.size++;
-      if (at === s.r.length) s.grow();
-      index.set(key, at);
+    let at: number;
+    if (hash) {
+      const key = ((R << 24) | (G << 16) | (B << 8) | A) >>> 0;
+      at = hash.get(key);
+      if (at < 0) {
+        if (s.size >= cap) return undefined;
+        at = s.size++;
+        if (at === s.r.length) s.grow();
+        hash.set(key, at);
+      }
+    } else {
+      const key = coarseKey(R, G, B, A);
+      at = direct![key]!;
+      if (at < 0) {
+        at = s.size++;
+        if (at === s.r.length) s.grow();
+        direct![key] = at;
+      }
     }
     const k = A / 255,
       pr = R * k,
