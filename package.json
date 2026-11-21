@@ -18,11 +18,11 @@
   ],
   "homepage": "https://konvetto.com/images/compress-png",
   "bugs": {
-    "url": "https://github.com/konvetto/pngmint/issues"
+    "url": "https://github.com/Konvetto/pngmint/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/konvetto/pngmint.git"
+    "url": "git+https://github.com/Konvetto/pngmint.git"
   },
   "license": "MIT",
   "author": "Konvetto (https://konvetto.com)",

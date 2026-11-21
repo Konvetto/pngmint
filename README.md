@@ -8,7 +8,7 @@
 [![bundle size](https://img.shields.io/bundlejs/size/pngmint?label=gzip)](https://bundlejs.com/?q=pngmint)
 [![dependencies](https://img.shields.io/badge/dependencies-0-success)](./package.json)
 [![license](https://img.shields.io/npm/l/pngmint)](./LICENSE)
-[![CI](https://github.com/konvetto/pngmint/actions/workflows/ci.yml/badge.svg)](https://github.com/konvetto/pngmint/actions/workflows/ci.yml)
+[![CI](https://github.com/Konvetto/pngmint/actions/workflows/ci.yml/badge.svg)](https://github.com/Konvetto/pngmint/actions/workflows/ci.yml)
 
 pngmint turns RGBA pixels into an indexed PNG with up to 256 colours: on the benchmark photos 2.7
 to 6.4 times smaller than lossless PNG, depending on the preset, and a near-lossless file for

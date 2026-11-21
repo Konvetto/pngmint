@@ -9,6 +9,8 @@ name: Release
 on:
   push:
     branches: [main]
+  # Retry the npm publish of the version in package.json (e.g. after a failed publish job).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -37,7 +39,7 @@ jobs:
 
   publish:
     needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
