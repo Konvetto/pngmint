@@ -1,8 +1,9 @@
 name: Release
 
 # Publishes to npm with provenance when a version tag is pushed (v1.2.3).
-# npm trusted publishing (OIDC, no token): the package's settings on npmjs.com name this
-# repository and workflow. npm itself does the publish, as it handles OIDC and provenance.
+# npm trusted publishing (OIDC): the package's settings on npmjs.com name this repository and
+# workflow. The very first release (the package does not exist on npm yet) uses a short-lived
+# NPM_TOKEN secret instead; delete the secret once trusted publishing is set up.
 on:
   push:
     tags: ['v*']
@@ -29,6 +30,8 @@ jobs:
         run: |
           test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
       - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: GitHub release
         uses: softprops/action-gh-release@v2
         with:
