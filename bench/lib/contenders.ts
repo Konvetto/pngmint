@@ -38,7 +38,7 @@ const dither = (colors: number) =>
   colors >= 256 ? 0 : colors >= 128 ? 0.4 : colors >= 64 ? 0.65 : 0.6;
 
 /** The default install: no options beyond colours and dithering, CompressionStream for deflate. */
-const pigmint: Contender = {
+const pngmint: Contender = {
   name: NAME,
   lossy: true,
   run: async (rgba, w, h, colors) =>
@@ -46,7 +46,7 @@ const pigmint: Contender = {
 };
 
 /** The same palette and pixels, compressed through the optional deflate hook with fflate level 9. */
-const pigmintHooked: Contender = {
+const pngmintHooked: Contender = {
   name: HOOKED,
   lossy: true,
   note: `${HOOKED}: identical pixels to ${NAME}, IDAT from fflate zlibSync level 9 through the deflate option`,
@@ -139,8 +139,8 @@ const oxipng: Contender = {
 };
 
 export const contenders: Contender[] = [
-  pigmint,
-  pigmintHooked,
+  pngmint,
+  pngmintHooked,
   upng,
   imageQ,
   libimagequant,

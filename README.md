@@ -1,14 +1,14 @@
-# pigmint
+# pngmint
 
 **Palette PNGs that stay sharp. Pure TypeScript, zero dependencies, 5 kB, no wasm.**
 
-[![npm](https://img.shields.io/npm/v/pigmint)](https://www.npmjs.com/package/pigmint)
-[![bundle size](https://img.shields.io/bundlejs/size/pigmint?label=gzip)](https://bundlejs.com/?q=pigmint)
+[![npm](https://img.shields.io/npm/v/pngmint)](https://www.npmjs.com/package/pngmint)
+[![bundle size](https://img.shields.io/bundlejs/size/pngmint?label=gzip)](https://bundlejs.com/?q=pngmint)
 [![dependencies](https://img.shields.io/badge/dependencies-0-success)](./package.json)
-[![license](https://img.shields.io/npm/l/pigmint)](./LICENSE)
-[![CI](https://github.com/konvetto/pigmint/actions/workflows/ci.yml/badge.svg)](https://github.com/konvetto/pigmint/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/pngmint)](./LICENSE)
+[![CI](https://github.com/konvetto/pngmint/actions/workflows/ci.yml/badge.svg)](https://github.com/konvetto/pngmint/actions/workflows/ci.yml)
 
-pigmint turns RGBA pixels into an indexed PNG with up to 256 colours: on the benchmark photos 2.7
+pngmint turns RGBA pixels into an indexed PNG with up to 256 colours: on the benchmark photos 2.7
 to 6.4 times smaller than lossless PNG, depending on the preset, and a near-lossless file for
 screenshots and flat art. It runs where your pixels already
 are, in the browser, in a Web Worker, in Node, Deno or Bun, from one ES module with no
@@ -16,17 +16,17 @@ dependencies: the file is compressed by the platform's `CompressionStream`, or b
 compressor you pass in.
 
 > **Try it without installing anything:** the [Compress PNG](https://konvetto.com/images/compress-png)
-> tool on Konvetto runs pigmint in your browser. No upload, no account, your file never leaves the
+> tool on Konvetto runs pngmint in your browser. No upload, no account, your file never leaves the
 > tab.
 
-## Why pigmint
+## Why pngmint
 
 Measured on 14 public-domain images (photos, screenshots, illustrations, transparency) against
 UPNG.js, image-q and libimagequant, all given the same pixels and the same colour count. Full
 tables, method and the reproducible script are [below](#benchmarks).
 
-- **Closest to the original at 256 colours**: on the five photos pigmint's PSNR is 0.7 dB above UPNG.js, 1.1 dB above image-q and 1.4 dB above libimagequant at 256 colours, and it is the closest of the four on 11 of 12 lossy images at 256 and on 12 of 13 at 128 colours.
-- **Smallest files at 256 colours**: at 256 colours pigmint's photos are 2 percent smaller than UPNG.js and image-q and 17 percent smaller than libimagequant, with the default compressor and no hook.
+- **Closest to the original at 256 colours**: on the five photos pngmint's PSNR is 0.7 dB above UPNG.js, 1.1 dB above image-q and 1.4 dB above libimagequant at 256 colours, and it is the closest of the four on 11 of 12 lossy images at 256 and on 12 of 13 at 128 colours.
+- **Smallest files at 256 colours**: at 256 colours pngmint's photos are 2 percent smaller than UPNG.js and image-q and 17 percent smaller than libimagequant, with the default compressor and no hook.
 - **Fast without wasm**: 1.7 to 2.7 times faster than the libimagequant wasm build and 10 to 15 times faster than image-q on photos; the fastest of the four on screenshots and illustrations at every colour count (UPNG.js is faster on photos).
 - **Lossless when it can be**: an image with at most `maxColors` colours comes back pixel for
   pixel, at the smallest bit depth PNG allows (1, 2, 4 or 8 bits).
@@ -44,7 +44,7 @@ Where it loses, honestly: below 128 colours UPNG.js writes 8 to 22 percent small
 ## Install
 
 ```sh
-npm install pigmint
+npm install pngmint
 ```
 
 Node 20 or newer; any modern browser; Deno and Bun; ESM only. `quantize` returns a promise
@@ -56,7 +56,7 @@ callers that pass their own synchronous compressor (see [Deflate](#deflate)).
 ### Browser, from a canvas
 
 ```ts
-import { quantize, presets } from 'pigmint';
+import { quantize, presets } from 'pngmint';
 
 const canvas = document.querySelector('canvas')!;
 const { data, width, height } = canvas
@@ -77,7 +77,7 @@ run it off the main thread:
 
 ```ts
 // worker.ts
-import { quantize } from 'pigmint';
+import { quantize } from 'pngmint';
 self.onmessage = async ({ data: { rgba, width, height, options } }) => {
   const { png, colors } = await quantize(rgba, width, height, options);
   self.postMessage({ png, colors }, [png.buffer]);
@@ -90,12 +90,12 @@ worker.postMessage({ rgba: imageData.data, width, height, options: { maxColors: 
 
 ### Node, with a decoder
 
-pigmint takes pixels, not files. Decode with whatever you have (sharp, pngjs, jpeg-js):
+pngmint takes pixels, not files. Decode with whatever you have (sharp, pngjs, jpeg-js):
 
 ```ts
 import sharp from 'sharp';
 import { writeFile } from 'node:fs/promises';
-import { quantize, presets } from 'pigmint';
+import { quantize, presets } from 'pngmint';
 
 const { data, info } = await sharp('photo.jpg')
   .ensureAlpha()
@@ -117,7 +117,7 @@ decoder give it.
 ### Lower-level API
 
 ```ts
-import { createPalette, applyPalette, encodeIndexedPng } from 'pigmint';
+import { createPalette, applyPalette, encodeIndexedPng } from 'pngmint';
 
 const { palette, transparentIndex } = createPalette(rgba, { maxColors: 64 }); // straight RGBA bytes
 const indices = applyPalette(rgba, width, height, palette, { dither: 0.5, transparentIndex });
@@ -137,7 +137,7 @@ on the benchmark set, the bytes are the same everywhere, and the synchronous var
 
 ```ts
 import { zlibSync } from 'fflate';
-import { quantizeSync, presets } from 'pigmint';
+import { quantizeSync, presets } from 'pngmint';
 
 const deflate = (raw: Uint8Array) => zlibSync(raw, { level: 9 });
 const { png } = quantizeSync(rgba, width, height, { ...presets.balanced, deflate });
@@ -201,7 +201,7 @@ Reproduce it: `pnpm bench:images && pnpm bench` (about 15 minutes; `--only kodim
 `bench/out/results.json`, with every output file next to them; the committed copy is
 [`bench/results.md`](./bench/results.md).
 
-Method: every library gets the same decoded RGBA and the same colour count. pigmint runs as
+Method: every library gets the same decoded RGBA and the same colour count. pngmint runs as
 installed, with no options beyond colours and dithering, so its files come from the default
 `CompressionStream` compressor; the optional fflate hook appears only as its own, labelled row.
 Each output is decoded
@@ -211,98 +211,98 @@ warm-up, on an Apple Silicon laptop with Node 26. Lossless oxipng (level 2) is i
 reference only.
 
 Contenders: UPNG.js 2.1.0, image-q 4.0.0 (wuquant palette, Floyd-Steinberg below 256 colours; it
-has no PNG writer, so its pixels are written losslessly by pigmint), libimagequant through the
+has no PNG writer, so its pixels are written losslessly by pngmint), libimagequant through the
 `imagequant` 0.1.2 wasm build (speed 4). libimagequant is GPL-3.0: it is a devDependency of the
 benchmark and never part of this package.
 
-### Summary, other libraries relative to pigmint at the same colour count
+### Summary, other libraries relative to pngmint at the same colour count
 
-Photos (5 images, 0.4 to 14 MP). Ratios are geometric means of (library / pigmint): a size ratio above 1.00 means the other library's file is larger, a time ratio above 1.00 means it is slower. PSNR and SSIM are mean differences (library minus pigmint): below 0 means pigmint is closer to the original. The last row of each group is pigmint's own output compressed through the optional `deflate` hook with fflate level 9, shown apart from the default.
+Photos (5 images, 0.4 to 14 MP). Ratios are geometric means of (library / pngmint): a size ratio above 1.00 means the other library's file is larger, a time ratio above 1.00 means it is slower. PSNR and SSIM are mean differences (library minus pngmint): below 0 means pngmint is closer to the original. The last row of each group is pngmint's own output compressed through the optional `deflate` hook with fflate level 9, shown apart from the default.
 
 | Colours | Library                                       | Size ratio | PSNR diff (dB) | SSIM diff | Time ratio |
 | ------: | --------------------------------------------- | ---------: | -------------: | --------: | ---------: |
 |     256 | UPNG.js                                       |       1.02 |          -0.73 |   -0.0015 |       0.88 |
 |     256 | image-q                                       |       1.02 |          -1.13 |   +0.0023 |      10.96 |
 |     256 | libimagequant (wasm)                          |       1.17 |          -1.44 |   +0.0042 |       2.70 |
-|     256 | pigmint with optional deflate hook (fflate 9) |       0.98 |          +0.00 |   +0.0000 |       1.38 |
+|     256 | pngmint with optional deflate hook (fflate 9) |       0.98 |          +0.00 |   +0.0000 |       1.38 |
 |     128 | UPNG.js                                       |       0.92 |          -0.53 |   -0.0068 |       0.62 |
 |     128 | image-q                                       |       1.08 |          -1.71 |   +0.0049 |      15.09 |
 |     128 | libimagequant (wasm)                          |       1.10 |          -1.13 |   +0.0041 |       1.66 |
-|     128 | pigmint with optional deflate hook (fflate 9) |       0.99 |          +0.00 |   +0.0000 |       1.46 |
+|     128 | pngmint with optional deflate hook (fflate 9) |       0.99 |          +0.00 |   +0.0000 |       1.46 |
 |      64 | UPNG.js                                       |       0.82 |          -0.15 |   -0.0140 |       0.84 |
 |      64 | image-q                                       |       1.00 |          -1.33 |   +0.0046 |       9.89 |
 |      64 | libimagequant (wasm)                          |       1.05 |          -0.83 |   +0.0038 |       2.08 |
-|      64 | pigmint with optional deflate hook (fflate 9) |       1.00 |          +0.00 |   +0.0000 |       1.55 |
+|      64 | pngmint with optional deflate hook (fflate 9) |       1.00 |          +0.00 |   +0.0000 |       1.55 |
 |      32 | UPNG.js                                       |       0.78 |          -0.24 |   -0.0237 |       0.87 |
 |      32 | image-q                                       |       0.97 |          -1.46 |   +0.0051 |      12.54 |
 |      32 | libimagequant (wasm)                          |       1.06 |          -0.70 |   +0.0052 |       2.46 |
-|      32 | pigmint with optional deflate hook (fflate 9) |       1.00 |          +0.00 |   +0.0000 |       1.76 |
+|      32 | pngmint with optional deflate hook (fflate 9) |       1.00 |          +0.00 |   +0.0000 |       1.76 |
 
-Graphics (9 screenshots, illustrations, logos and pixel art) are a different story: at 256 colours most libraries are above 45 dB, several outputs are lossless, and the differences are in bytes, not in visible quality. There pigmint's default compressor is the weak spot (see [Deflate](#deflate)): UPNG.js and libimagequant write 3 to 4 percent smaller files on average, image-q 7 percent smaller, and the hook recovers 3 percent. Counting wins across all 14 images at the same colour count, pigmint is closer to the original (PSNR) than UPNG.js on 11 of 12 lossy cases at 256 colours and 12 of 13 at 128, than libimagequant on 11 of 12 and 13 of 13, and than image-q on every one.
+Graphics (9 screenshots, illustrations, logos and pixel art) are a different story: at 256 colours most libraries are above 45 dB, several outputs are lossless, and the differences are in bytes, not in visible quality. There pngmint's default compressor is the weak spot (see [Deflate](#deflate)): UPNG.js and libimagequant write 3 to 4 percent smaller files on average, image-q 7 percent smaller, and the hook recovers 3 percent. Counting wins across all 14 images at the same colour count, pngmint is closer to the original (PSNR) than UPNG.js on 11 of 12 lossy cases at 256 colours and 12 of 13 at 128, than libimagequant on 11 of 12 and 13 of 13, and than image-q on every one.
 
 ### With and without the deflate hook vs other libraries
 
-Totals per colour count and group, so the two pigmint rows can be compared with each other and
-with the rest. `pigmint` is the default install; `pigmint (fflate hook)` is the same palette and
+Totals per colour count and group, so the two pngmint rows can be compared with each other and
+with the rest. `pngmint` is the default install; `pngmint (fflate hook)` is the same palette and
 pixels with the IDAT from fflate level 9 through the `deflate` option. Size and time are sums over
 the group's images; PSNR and SSIM are means over the images where every library is lossy
 (lossless outputs have no finite PSNR and are left out of the means).
 
 | Colours | Group    | Library               | Size (kB) | Size vs default | PSNR (dB) |   SSIM | Time (ms) | Time vs default |
 | ------: | -------- | --------------------- | --------: | --------------: | --------: | -----: | --------: | --------------: |
-|     256 | photos   | pigmint               |    9846.7 |           1.000 |     37.78 | 0.9926 |      3623 |            1.00 |
-|     256 | photos   | pigmint (fflate hook) |    9607.0 |           0.976 |     37.78 | 0.9926 |      4338 |            1.20 |
+|     256 | photos   | pngmint               |    9846.7 |           1.000 |     37.78 | 0.9926 |      3623 |            1.00 |
+|     256 | photos   | pngmint (fflate hook) |    9607.0 |           0.976 |     37.78 | 0.9926 |      4338 |            1.20 |
 |     256 | photos   | upng-js               |   10014.4 |           1.017 |     37.04 | 0.9911 |      4429 |            1.22 |
 |     256 | photos   | image-q               |    9941.8 |           1.010 |     36.65 | 0.9950 |     41120 |           11.35 |
 |     256 | photos   | libimagequant         |   11769.8 |           1.195 |     36.34 | 0.9969 |      7927 |            2.19 |
-|     256 | graphics | pigmint               |    2067.7 |           1.000 |     58.81 | 0.9999 |      1191 |            1.00 |
-|     256 | graphics | pigmint (fflate hook) |    2043.2 |           0.988 |     58.81 | 0.9999 |      1939 |            1.63 |
+|     256 | graphics | pngmint               |    2067.7 |           1.000 |     58.81 | 0.9999 |      1191 |            1.00 |
+|     256 | graphics | pngmint (fflate hook) |    2043.2 |           0.988 |     58.81 | 0.9999 |      1939 |            1.63 |
 |     256 | graphics | upng-js               |    2189.8 |           1.059 |     57.17 | 1.0000 |      2338 |            1.96 |
 |     256 | graphics | image-q               |    1983.0 |           0.959 |     48.08 | 0.9999 |     38347 |           32.21 |
 |     256 | graphics | libimagequant         |    2275.6 |           1.101 |     55.42 | 1.0000 |      2804 |            2.36 |
-|     128 | photos   | pigmint               |    8706.2 |           1.000 |     35.27 | 0.9906 |      5066 |            1.00 |
-|     128 | photos   | pigmint (fflate hook) |    8637.6 |           0.992 |     35.27 | 0.9906 |      6073 |            1.20 |
+|     128 | photos   | pngmint               |    8706.2 |           1.000 |     35.27 | 0.9906 |      5066 |            1.00 |
+|     128 | photos   | pngmint (fflate hook) |    8637.6 |           0.992 |     35.27 | 0.9906 |      6073 |            1.20 |
 |     128 | photos   | upng-js               |    7861.4 |           0.903 |     34.73 | 0.9838 |      4083 |            0.81 |
 |     128 | photos   | image-q               |    9340.8 |           1.073 |     33.55 | 0.9954 |     71813 |           14.18 |
 |     128 | photos   | libimagequant         |    9669.4 |           1.111 |     34.14 | 0.9946 |      6725 |            1.33 |
-|     128 | graphics | pigmint               |    1795.3 |           1.000 |     57.08 | 0.9999 |      1146 |            1.00 |
-|     128 | graphics | pigmint (fflate hook) |    1781.8 |           0.992 |     57.08 | 0.9999 |      1862 |            1.63 |
+|     128 | graphics | pngmint               |    1795.3 |           1.000 |     57.08 | 0.9999 |      1146 |            1.00 |
+|     128 | graphics | pngmint (fflate hook) |    1781.8 |           0.992 |     57.08 | 0.9999 |      1862 |            1.63 |
 |     128 | graphics | upng-js               |    1832.3 |           1.021 |     56.49 | 0.9999 |      2728 |            2.38 |
 |     128 | graphics | image-q               |    1841.6 |           1.026 |     48.54 | 0.9999 |     59615 |           52.04 |
 |     128 | graphics | libimagequant         |    1942.1 |           1.082 |     55.07 | 1.0000 |      2929 |            2.56 |
-|      64 | photos   | pigmint               |    7282.6 |           1.000 |     32.45 | 0.9864 |      4636 |            1.00 |
-|      64 | photos   | pigmint (fflate hook) |    7303.8 |           1.003 |     32.45 | 0.9864 |      5672 |            1.22 |
+|      64 | photos   | pngmint               |    7282.6 |           1.000 |     32.45 | 0.9864 |      4636 |            1.00 |
+|      64 | photos   | pngmint (fflate hook) |    7303.8 |           1.003 |     32.45 | 0.9864 |      5672 |            1.22 |
 |      64 | photos   | upng-js               |    5994.1 |           0.823 |     32.30 | 0.9724 |      4027 |            0.87 |
 |      64 | photos   | image-q               |    7340.8 |           1.008 |     31.12 | 0.9910 |     33873 |            7.31 |
 |      64 | photos   | libimagequant         |    7850.7 |           1.078 |     31.62 | 0.9901 |      7012 |            1.51 |
-|      64 | graphics | pigmint               |    1511.1 |           1.000 |     52.65 | 0.9999 |       980 |            1.00 |
-|      64 | graphics | pigmint (fflate hook) |    1516.3 |           1.003 |     52.65 | 0.9999 |      1488 |            1.52 |
+|      64 | graphics | pngmint               |    1511.1 |           1.000 |     52.65 | 0.9999 |       980 |            1.00 |
+|      64 | graphics | pngmint (fflate hook) |    1516.3 |           1.003 |     52.65 | 0.9999 |      1488 |            1.52 |
 |      64 | graphics | upng-js               |    1521.3 |           1.007 |     51.97 | 0.9998 |      3054 |            3.11 |
 |      64 | graphics | image-q               |    1616.2 |           1.070 |     46.83 | 0.9999 |     31144 |           31.77 |
 |      64 | graphics | libimagequant         |    1616.6 |           1.070 |     51.94 | 1.0000 |      2512 |            2.56 |
-|      32 | photos   | pigmint               |    5693.7 |           1.000 |     29.93 | 0.9758 |      4122 |            1.00 |
-|      32 | photos   | pigmint (fflate hook) |    5703.3 |           1.002 |     29.93 | 0.9758 |      5059 |            1.23 |
+|      32 | photos   | pngmint               |    5693.7 |           1.000 |     29.93 | 0.9758 |      4122 |            1.00 |
+|      32 | photos   | pngmint (fflate hook) |    5703.3 |           1.002 |     29.93 | 0.9758 |      5059 |            1.23 |
 |      32 | photos   | upng-js               |    4655.8 |           0.818 |     29.69 | 0.9521 |      3694 |            0.90 |
 |      32 | photos   | image-q               |    5563.3 |           0.977 |     28.47 | 0.9810 |     32054 |            7.78 |
 |      32 | photos   | libimagequant         |    6146.2 |           1.079 |     29.22 | 0.9810 |      6686 |            1.62 |
-|      32 | graphics | pigmint               |    1334.0 |           1.000 |     47.66 | 0.9997 |      1435 |            1.00 |
-|      32 | graphics | pigmint (fflate hook) |    1343.1 |           1.007 |     47.66 | 0.9997 |      2005 |            1.40 |
+|      32 | graphics | pngmint               |    1334.0 |           1.000 |     47.66 | 0.9997 |      1435 |            1.00 |
+|      32 | graphics | pngmint (fflate hook) |    1343.1 |           1.007 |     47.66 | 0.9997 |      2005 |            1.40 |
 |      32 | graphics | upng-js               |    1287.9 |           0.965 |     47.13 | 0.9996 |      3035 |            2.12 |
 |      32 | graphics | image-q               |    1364.6 |           1.023 |     44.49 | 0.9999 |     25812 |           17.99 |
 |      32 | graphics | libimagequant         |    1358.5 |           1.018 |     47.43 | 0.9999 |      2448 |            1.71 |
 
 ### Reading it
 
-- **At 256 colours pigmint is the most faithful of the four on photos**: 0.7 dB above UPNG.js, 1.1 dB above image-q, 1.4 dB above libimagequant, with files 2 percent smaller than UPNG.js and image-q and 17 percent smaller than libimagequant.
+- **At 256 colours pngmint is the most faithful of the four on photos**: 0.7 dB above UPNG.js, 1.1 dB above image-q, 1.4 dB above libimagequant, with files 2 percent smaller than UPNG.js and image-q and 17 percent smaller than libimagequant.
 - **Below 128 colours UPNG.js writes smaller files** (8 percent at 128, 18 percent at 64, 22 percent at 32 on photos) because it does not dither; it pays with lower PSNR (0.2 to 0.5 dB) and clearly lower SSIM (-0.007 to -0.024, visible banding in skies and skin). Dial `dither` down to 0 if bytes matter more than banding and you get most of that back.
-- **libimagequant has the best SSIM on photos at every colour count** (+0.004 to +0.005 over pigmint): its dithering covers the whole image with an adaptive strength, while pigmint dithers smooth areas only and clamps the carried error. Its PSNR is lower and its files 5 to 17 percent larger.
-- **Speed**: UPNG.js is the fastest on photos (0.6 to 0.9 of pigmint's time); pigmint is 1.7 to 2.7 times faster than the libimagequant wasm build and 10 to 15 times faster than image-q. On graphics pigmint is the fastest of the four at every count (UPNG.js 2.2 to 3.4 times slower, libimagequant 1.9 to 2.8 times).
-- **Lossless cases**: an image with at most 256 colours comes back pixel for pixel (`illustration-venn-diagram`, `pixelart-bird`). The file is then larger than oxipng's lossless output (151 kB against 128 kB), because oxipng tries PNG filters and a stronger deflate; pigmint writes rows unfiltered. If lossless size is the goal, run oxipng on the result.
+- **libimagequant has the best SSIM on photos at every colour count** (+0.004 to +0.005 over pngmint): its dithering covers the whole image with an adaptive strength, while pngmint dithers smooth areas only and clamps the carried error. Its PSNR is lower and its files 5 to 17 percent larger.
+- **Speed**: UPNG.js is the fastest on photos (0.6 to 0.9 of pngmint's time); pngmint is 1.7 to 2.7 times faster than the libimagequant wasm build and 10 to 15 times faster than image-q. On graphics pngmint is the fastest of the four at every count (UPNG.js 2.2 to 3.4 times slower, libimagequant 1.9 to 2.8 times).
+- **Lossless cases**: an image with at most 256 colours comes back pixel for pixel (`illustration-venn-diagram`, `pixelart-bird`). The file is then larger than oxipng's lossless output (151 kB against 128 kB), because oxipng tries PNG filters and a stronger deflate; pngmint writes rows unfiltered. If lossless size is the goal, run oxipng on the result.
 - **Tiny files**: on a 1 MP icon with 9 colours the default compressor costs 1 kB (8.1 kB against 7.0 with the hook, 5.7 to 7.5 for the others). The hook closes that gap.
 
 ### Every image at 256 colours
 
-| Image                        |   MP | pigmint kB |       dB |   ms | hook kB | UPNG.js kB |    dB |   ms | image-q kB |    dB |    ms | libimagequant kB |       dB |   ms | oxipng kB |
+| Image                        |   MP | pngmint kB |       dB |   ms | hook kB | UPNG.js kB |    dB |   ms | image-q kB |    dB |    ms | libimagequant kB |       dB |   ms | oxipng kB |
 | ---------------------------- | ---: | ---------: | -------: | ---: | ------: | ---------: | ----: | ---: | ---------: | ----: | ----: | ---------------: | -------: | ---: | --------: |
 | photo-kodim03-hats           |  0.4 |      141.4 |    39.24 |  133 |   139.6 |      145.5 | 38.29 |   89 |      147.5 | 38.64 |   787 |            168.3 |    38.17 |  153 |     469.4 |
 | photo-kodim15-face           |  0.4 |      194.3 |    38.82 |  127 |   191.4 |      199.2 | 38.06 |   85 |      192.5 | 37.96 |   875 |            209.8 |    38.15 |  716 |     574.1 |
@@ -364,7 +364,7 @@ Full per-image tables for 128, 64 and 32 colours and the presets are in
 
 ## Used in production on Konvetto
 
-pigmint is the engine behind the palette step of these free browser tools. They run the same code
+pngmint is the engine behind the palette step of these free browser tools. They run the same code
 you install from npm, in a Web Worker, and never upload your file:
 
 - Compress PNG: [English](https://konvetto.com/images/compress-png),

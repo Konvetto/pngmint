@@ -1,5 +1,5 @@
 {
-  "name": "pigmint",
+  "name": "pngmint",
   "version": "0.1.0",
   "description": "Palette PNG quantizer in pure TypeScript with zero dependencies: exact histogram, median cut, k-means, selective dithering and an indexed PNG writer. Small, deterministic, browser-first.",
   "keywords": [
@@ -16,13 +16,13 @@
     "browser",
     "typescript"
   ],
-  "homepage": "https://github.com/konvetto/pigmint#readme",
+  "homepage": "https://github.com/konvetto/pngmint#readme",
   "bugs": {
-    "url": "https://github.com/konvetto/pigmint/issues"
+    "url": "https://github.com/konvetto/pngmint/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/konvetto/pigmint.git"
+    "url": "git+https://github.com/konvetto/pngmint.git"
   },
   "license": "MIT",
   "author": "Konvetto (https://konvetto.com)",
