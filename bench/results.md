@@ -45,6 +45,53 @@ Photos are the five photographs; graphics are the screenshots, illustrations, lo
 |      32 | libimagequant         | photos   |      5 |       1.06 |          -0.70 |   +0.0052 |       2.46 |
 |      32 | libimagequant         | graphics |      8 |       1.01 |          -0.23 |   +0.0002 |       1.98 |
 
+## With and without the deflate hook vs other libraries
+
+Totals and means per colour count and group. pigmint is the default install (CompressionStream); "pigmint (fflate hook)" is the same palette and pixels compressed through the optional deflate option with fflate level 9. Size and time are sums over the group's images; PSNR and SSIM are means over the images where every library is lossy (lossless rows have no finite PSNR and are left out of the means).
+
+| Colours | Group    | Library               | Size (kB) | Size vs default | PSNR (dB) |   SSIM | Time (ms) | Time vs default |
+| ------: | -------- | --------------------- | --------: | --------------: | --------: | -----: | --------: | --------------: |
+|     256 | photos   | pigmint               |    9846.7 |           1.000 |     37.78 | 0.9926 |      3623 |            1.00 |
+|     256 | photos   | pigmint (fflate hook) |    9607.0 |           0.976 |     37.78 | 0.9926 |      4338 |            1.20 |
+|     256 | photos   | upng-js               |   10014.4 |           1.017 |     37.04 | 0.9911 |      4429 |            1.22 |
+|     256 | photos   | image-q               |    9941.8 |           1.010 |     36.65 | 0.9950 |     41120 |           11.35 |
+|     256 | photos   | libimagequant         |   11769.8 |           1.195 |     36.34 | 0.9969 |      7927 |            2.19 |
+|     256 | graphics | pigmint               |    2067.7 |           1.000 |     58.81 | 0.9999 |      1191 |            1.00 |
+|     256 | graphics | pigmint (fflate hook) |    2043.2 |           0.988 |     58.81 | 0.9999 |      1939 |            1.63 |
+|     256 | graphics | upng-js               |    2189.8 |           1.059 |     57.17 | 1.0000 |      2338 |            1.96 |
+|     256 | graphics | image-q               |    1983.0 |           0.959 |     48.08 | 0.9999 |     38347 |           32.21 |
+|     256 | graphics | libimagequant         |    2275.6 |           1.101 |     55.42 | 1.0000 |      2804 |            2.36 |
+|     128 | photos   | pigmint               |    8706.2 |           1.000 |     35.27 | 0.9906 |      5066 |            1.00 |
+|     128 | photos   | pigmint (fflate hook) |    8637.6 |           0.992 |     35.27 | 0.9906 |      6073 |            1.20 |
+|     128 | photos   | upng-js               |    7861.4 |           0.903 |     34.73 | 0.9838 |      4083 |            0.81 |
+|     128 | photos   | image-q               |    9340.8 |           1.073 |     33.55 | 0.9954 |     71813 |           14.18 |
+|     128 | photos   | libimagequant         |    9669.4 |           1.111 |     34.14 | 0.9946 |      6725 |            1.33 |
+|     128 | graphics | pigmint               |    1795.3 |           1.000 |     57.08 | 0.9999 |      1146 |            1.00 |
+|     128 | graphics | pigmint (fflate hook) |    1781.8 |           0.992 |     57.08 | 0.9999 |      1862 |            1.63 |
+|     128 | graphics | upng-js               |    1832.3 |           1.021 |     56.49 | 0.9999 |      2728 |            2.38 |
+|     128 | graphics | image-q               |    1841.6 |           1.026 |     48.54 | 0.9999 |     59615 |           52.04 |
+|     128 | graphics | libimagequant         |    1942.1 |           1.082 |     55.07 | 1.0000 |      2929 |            2.56 |
+|      64 | photos   | pigmint               |    7282.6 |           1.000 |     32.45 | 0.9864 |      4636 |            1.00 |
+|      64 | photos   | pigmint (fflate hook) |    7303.8 |           1.003 |     32.45 | 0.9864 |      5672 |            1.22 |
+|      64 | photos   | upng-js               |    5994.1 |           0.823 |     32.30 | 0.9724 |      4027 |            0.87 |
+|      64 | photos   | image-q               |    7340.8 |           1.008 |     31.12 | 0.9910 |     33873 |            7.31 |
+|      64 | photos   | libimagequant         |    7850.7 |           1.078 |     31.62 | 0.9901 |      7012 |            1.51 |
+|      64 | graphics | pigmint               |    1511.1 |           1.000 |     52.65 | 0.9999 |       980 |            1.00 |
+|      64 | graphics | pigmint (fflate hook) |    1516.3 |           1.003 |     52.65 | 0.9999 |      1488 |            1.52 |
+|      64 | graphics | upng-js               |    1521.3 |           1.007 |     51.97 | 0.9998 |      3054 |            3.11 |
+|      64 | graphics | image-q               |    1616.2 |           1.070 |     46.83 | 0.9999 |     31144 |           31.77 |
+|      64 | graphics | libimagequant         |    1616.6 |           1.070 |     51.94 | 1.0000 |      2512 |            2.56 |
+|      32 | photos   | pigmint               |    5693.7 |           1.000 |     29.93 | 0.9758 |      4122 |            1.00 |
+|      32 | photos   | pigmint (fflate hook) |    5703.3 |           1.002 |     29.93 | 0.9758 |      5059 |            1.23 |
+|      32 | photos   | upng-js               |    4655.8 |           0.818 |     29.69 | 0.9521 |      3694 |            0.90 |
+|      32 | photos   | image-q               |    5563.3 |           0.977 |     28.47 | 0.9810 |     32054 |            7.78 |
+|      32 | photos   | libimagequant         |    6146.2 |           1.079 |     29.22 | 0.9810 |      6686 |            1.62 |
+|      32 | graphics | pigmint               |    1334.0 |           1.000 |     47.66 | 0.9997 |      1435 |            1.00 |
+|      32 | graphics | pigmint (fflate hook) |    1343.1 |           1.007 |     47.66 | 0.9997 |      2005 |            1.40 |
+|      32 | graphics | upng-js               |    1287.9 |           0.965 |     47.13 | 0.9996 |      3035 |            2.12 |
+|      32 | graphics | image-q               |    1364.6 |           1.023 |     44.49 | 0.9999 |     25812 |           17.99 |
+|      32 | graphics | libimagequant         |    1358.5 |           1.018 |     47.43 | 0.9999 |      2448 |            1.71 |
+
 ## Wins and losses per image (PSNR at the same colour count)
 
 | Colours | Library               | pigmint closer | other closer | pigmint smaller | other smaller |

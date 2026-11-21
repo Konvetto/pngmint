@@ -66,6 +66,44 @@ export function report(input: Row[]): string {
   }
   lines.push('');
 
+  lines.push('## With and without the deflate hook vs other libraries', '');
+  lines.push(
+    `Totals and means per colour count and group. ${NAME} is the default install (CompressionStream); "${HOOKED}" is the same palette and pixels compressed through the optional deflate option with fflate level 9. Size and time are sums over the group's images; PSNR and SSIM are means over the images where every library is lossy (lossless rows have no finite PSNR and are left out of the means).`,
+    '',
+  );
+  lines.push(
+    '| Colours | Group | Library | Size (kB) | Size vs default | PSNR (dB) | SSIM | Time (ms) | Time vs default |',
+  );
+  lines.push('|---:|---|---|---:|---:|---:|---:|---:|---:|');
+  const allLibs = [NAME, HOOKED, ...libs.filter((l) => l !== NAME && l !== HOOKED)];
+  for (const colors of colorSteps) {
+    for (const [set, inSet] of sets) {
+      const images = [
+        ...new Set(ok.filter((r) => r.colors === colors && inSet(r)).map((r) => r.image)),
+      ];
+      const lossy = images.filter((im) =>
+        allLibs.every((lib) => {
+          const r = ok.find((x) => x.library === lib && x.image === im && x.colors === colors);
+          return r !== undefined && r.psnr !== Infinity;
+        }),
+      );
+      const base = allLibs.map((lib) =>
+        ok.filter((r) => r.library === lib && r.colors === colors && images.includes(r.image)),
+      );
+      const sum = (rs: Row[], f: (r: Row) => number) => rs.reduce((n, r) => n + f(r), 0);
+      const defaultRows = base[0]!;
+      allLibs.forEach((lib, i) => {
+        const rs = base[i]!;
+        if (rs.length !== images.length) return;
+        const quality = rs.filter((r) => lossy.includes(r.image));
+        lines.push(
+          `| ${colors} | ${set} | ${lib} | ${kb(sum(rs, (r) => r.bytes))} | ${(sum(rs, (r) => r.bytes) / sum(defaultRows, (r) => r.bytes)).toFixed(3)} | ${quality.length ? mean(quality.map((r) => r.psnr)).toFixed(2) : ''} | ${quality.length ? mean(quality.map((r) => r.ssim)).toFixed(4) : ''} | ${sum(rs, (r) => r.ms).toFixed(0)} | ${(sum(rs, (r) => r.ms) / sum(defaultRows, (r) => r.ms)).toFixed(2)} |`,
+        );
+      });
+    }
+  }
+  lines.push('');
+
   lines.push('## Wins and losses per image (PSNR at the same colour count)', '');
   lines.push(
     `| Colours | Library | ${NAME} closer | other closer | ${NAME} smaller | other smaller |`,
