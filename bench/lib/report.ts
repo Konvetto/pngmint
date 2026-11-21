@@ -1,4 +1,5 @@
 /** Markdown tables from benchmark rows: a summary per colour count and the full per-image table. */
+import { NAME } from './contenders.js';
 import type { Row } from '../run.js';
 
 const kb = (b: number) => (b / 1024).toFixed(1);
@@ -9,16 +10,16 @@ const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
 export function report(rows: Row[]): string {
   const ok = rows.filter((r) => !r.note?.startsWith('failed'));
   const libs = [...new Set(ok.map((r) => r.library))].filter(
-    (l) => !l.startsWith('pigmint:') && l !== 'oxipng',
+    (l) => !l.startsWith(`${NAME}:`) && l !== 'oxipng',
   );
-  const colorSteps = [
-    ...new Set(ok.filter((r) => r.library === 'pigmint').map((r) => r.colors)),
-  ].sort((a, b) => b - a);
+  const colorSteps = [...new Set(ok.filter((r) => r.library === NAME).map((r) => r.colors))].sort(
+    (a, b) => b - a,
+  );
   const lines: string[] = [];
 
-  lines.push('## Summary: other libraries relative to pigmint, same colour count', '');
+  lines.push(`## Summary: other libraries relative to ${NAME}, same colour count`, '');
   lines.push(
-    'Size ratio is the geometric mean of (library bytes / pigmint bytes): below 1.00 means the other library is smaller. PSNR and SSIM are mean differences (library minus pigmint): below 0 means pigmint is closer to the original. Time ratio is the geometric mean of (library ms / pigmint ms).',
+    `Size ratio is the geometric mean of (library bytes / ${NAME} bytes): below 1.00 means the other library is smaller. PSNR and SSIM are mean differences (library minus ${NAME}): below 0 means ${NAME} is closer to the original. Time ratio is the geometric mean of (library ms / ${NAME} ms).`,
     '',
   );
   lines.push(
@@ -27,14 +28,14 @@ export function report(rows: Row[]): string {
   lines.push('|---:|---|---:|---:|---:|---:|---:|');
   for (const colors of colorSteps) {
     for (const lib of libs) {
-      if (lib === 'pigmint') continue;
+      if (lib === NAME) continue;
       const pairs = ok
         .filter((r) => r.library === lib && r.colors === colors)
         .map(
           (r) =>
             [
               r,
-              ok.find((p) => p.library === 'pigmint' && p.image === r.image && p.colors === colors),
+              ok.find((p) => p.library === NAME && p.image === r.image && p.colors === colors),
             ] as const,
         )
         .filter((pair): pair is readonly [Row, Row] => {
@@ -51,20 +52,18 @@ export function report(rows: Row[]): string {
 
   lines.push('## Wins and losses per image (PSNR at the same colour count)', '');
   lines.push(
-    '| Colours | Library | pigmint closer | other closer | pigmint smaller | other smaller |',
+    `| Colours | Library | ${NAME} closer | other closer | ${NAME} smaller | other smaller |`,
   );
   lines.push('|---:|---|---:|---:|---:|---:|');
   for (const colors of colorSteps) {
     for (const lib of libs) {
-      if (lib === 'pigmint') continue;
+      if (lib === NAME) continue;
       let closer = 0,
         farther = 0,
         smaller = 0,
         bigger = 0;
       for (const r of ok.filter((r) => r.library === lib && r.colors === colors)) {
-        const p = ok.find(
-          (p) => p.library === 'pigmint' && p.image === r.image && p.colors === colors,
-        );
+        const p = ok.find((p) => p.library === NAME && p.image === r.image && p.colors === colors);
         if (!p || r.psnr === Infinity || p.psnr === Infinity) continue;
         if (p.psnr > r.psnr + 0.05) closer++;
         else if (r.psnr > p.psnr + 0.05) farther++;
@@ -80,7 +79,7 @@ export function report(rows: Row[]): string {
   lines.push('## Presets', '');
   lines.push('| Image | Preset | Colours | kB | PSNR (dB) | SSIM | ms |');
   lines.push('|---|---|---:|---:|---:|---:|---:|');
-  for (const r of ok.filter((r) => r.library.startsWith('pigmint:')))
+  for (const r of ok.filter((r) => r.library.startsWith(`${NAME}:`)))
     lines.push(
       `| ${r.image} | ${r.library.slice(8)} | ${r.colors} | ${kb(r.bytes)} | ${db(r.psnr)} | ${r.ssim.toFixed(4)} | ${r.ms.toFixed(0)} |`,
     );
@@ -89,7 +88,7 @@ export function report(rows: Row[]): string {
   lines.push('## Every run', '');
   lines.push('| Image | Size | Colours | Library | kB | PSNR (dB) | SSIM | ms |');
   lines.push('|---|---|---:|---|---:|---:|---:|---:|');
-  for (const r of rows.filter((r) => !r.library.startsWith('pigmint:'))) {
+  for (const r of rows.filter((r) => !r.library.startsWith(`${NAME}:`))) {
     if (r.note?.startsWith('failed')) {
       lines.push(
         `| ${r.image} | ${r.width}x${r.height} | ${r.colors || ''} | ${r.library} | ${r.note} | | | |`,

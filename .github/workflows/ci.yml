@@ -49,7 +49,7 @@ jobs:
           node --input-type=module -e "
             import { quantize } from './dist/index.js';
             const rgba = new Uint8Array(64 * 64 * 4).map((_, i) => (i % 4 === 3 ? 255 : (i * 7) & 255));
-            const q = quantize(rgba, 64, 64, { maxColors: 16 });
+            const q = await quantize(rgba, 64, 64, { maxColors: 16 });
             if (q.png[1] !== 0x50 || q.colors !== 16) throw new Error('bad output');
             console.log('ok', q.png.length, 'bytes');
           "

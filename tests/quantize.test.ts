@@ -3,11 +3,28 @@ import {
   applyPalette,
   createPalette,
   encodeIndexedPng,
+  encodeIndexedPngSync,
   presets,
   psnrOf,
-  quantize,
+  quantize as quantizeAsync,
+  quantizeSync,
+  type QuantizeOptions,
+  type Rgba,
 } from '../src/index.js';
-import { expectSamePixels, flat, gradient, mse, noise, random, readPng } from './helpers.js';
+import {
+  deflate,
+  expectSamePixels,
+  flat,
+  gradient,
+  mse,
+  noise,
+  random,
+  readPng,
+} from './helpers.js';
+
+/** The synchronous variant with the deterministic compressor, which most tests want. */
+const quantize = (rgba: Rgba, w: number, h: number, o: QuantizeOptions = {}) =>
+  quantizeSync(rgba, w, h, { deflate, ...o });
 
 describe('quantize: lossless cases', () => {
   it('an image with few colours comes back pixel for pixel', () => {
@@ -281,12 +298,34 @@ describe('quantize: sizes and shapes', () => {
     );
   });
 
-  it('the deflate level changes size, not pixels', () => {
+  it('the compressor changes size, not pixels', async () => {
     const rgba = gradient(200, 50, [20, 0, 0], [255, 240, 200]);
-    const fast = quantize(rgba, 200, 50, { maxColors: 32, dither: 0.5, level: 1 });
-    const slow = quantize(rgba, 200, 50, { maxColors: 32, dither: 0.5, level: 9 });
-    expect(fast.indices).toEqual(slow.indices);
-    expect(slow.png.length).toBeLessThanOrEqual(fast.png.length);
+    const native = await quantizeAsync(rgba, 200, 50, { maxColors: 32, dither: 0.5 });
+    const fflate = quantize(rgba, 200, 50, { maxColors: 32, dither: 0.5 });
+    expect(native.indices).toEqual(fflate.indices);
+    expect(readPng(native.png).rgba).toEqual(readPng(fflate.png).rgba);
+    expect(Math.abs(native.png.length - fflate.png.length) / fflate.png.length).toBeLessThan(0.25);
+  });
+
+  it('the asynchronous variant takes a synchronous or an asynchronous deflate', async () => {
+    const rgba = gradient(64, 4, [0, 0, 0], [255, 255, 255]);
+    const a = await quantizeAsync(rgba, 64, 4, { maxColors: 8, deflate });
+    const b = await quantizeAsync(rgba, 64, 4, {
+      maxColors: 8,
+      deflate: (raw) => Promise.resolve(deflate(raw)),
+    });
+    expect(a.png).toEqual(b.png);
+    expect(a.png).toEqual(quantize(rgba, 64, 4, { maxColors: 8 }).png);
+  });
+
+  it('the synchronous variant needs a synchronous deflate', () => {
+    const rgba = gradient(8, 2, [0, 0, 0], [255, 255, 255]);
+    expect(() => quantizeSync(rgba, 8, 2)).toThrow(TypeError);
+    expect(() => quantizeSync(rgba, 8, 2, { deflate: (raw) => Promise.resolve(raw) })).toThrow(
+      TypeError,
+    );
+    expect(() => quantizeSync(rgba, 8, 2, { deflate: 'zip' as never })).toThrow(TypeError);
+    expect(() => quantizeSync(rgba, 8, 2, { deflate: () => [1, 2] as never })).toThrow(TypeError);
   });
 });
 
@@ -309,38 +348,39 @@ describe('validation', () => {
     expect(() => quantize(ok, 2, 2, { dither: NaN })).toThrow(RangeError);
     expect(() => quantize(ok, 2, 2, { rounds: -1 })).toThrow(RangeError);
     expect(() => quantize(ok, 2, 2, { minQuality: NaN })).toThrow(RangeError);
-    expect(() => quantize(ok, 2, 2, { level: 10 as never })).toThrow(RangeError);
-    expect(quantize(ok, 2, 2, { maxColors: 2, dither: 0, rounds: 0, level: 0 }).colors).toBe(1);
+    expect(quantize(ok, 2, 2, { maxColors: 2, dither: 0, rounds: 0 }).colors).toBe(1);
   });
 
-  it('createPalette rejects a partial pixel, applyPalette a bad palette or index', () => {
+  it('createPalette rejects a partial pixel, applyPalette a bad palette or index', async () => {
     expect(() => createPalette(new Uint8Array(6))).toThrow(RangeError);
     expect(() => createPalette(new Uint8Array(0))).toThrow(RangeError);
     expect(() => applyPalette(ok, 2, 2, new Uint8Array(6))).toThrow(RangeError);
     expect(() => applyPalette(ok, 2, 2, new Uint8Array(4), { transparentIndex: 1 })).toThrow(
       RangeError,
     );
-    expect(() => encodeIndexedPng(2, 2, new Uint8Array(4), new Uint8Array([0, 0, 1, 0]))).toThrow(
-      RangeError,
+    const enc = (w: number, h: number, p: Uint8Array, i: Uint8Array, o = {}) =>
+      encodeIndexedPngSync(w, h, p, i, { deflate, ...o });
+    expect(() => enc(2, 2, new Uint8Array(4), new Uint8Array([0, 0, 1, 0]))).toThrow(RangeError);
+    expect(() => enc(2, 2, new Uint8Array(4), new Uint8Array(3))).toThrow(RangeError);
+    expect(() => enc(0, 2, new Uint8Array(4), new Uint8Array(0))).toThrow(RangeError);
+    expect(() => enc(2 ** 31, 1, new Uint8Array(4), new Uint8Array(0))).toThrow(RangeError);
+    expect(() => enc(2, 2, new Uint8Array(6), new Uint8Array(4))).toThrow(RangeError);
+    expect(() => enc(2, 2, new Uint8Array(4), [0, 0, 0, 0] as never)).toThrow(RangeError);
+    expect(() => enc(2, 2, new Uint8Array(4), new Uint8Array(4), { deflate: 7 })).toThrow(
+      TypeError,
     );
-    expect(() => encodeIndexedPng(2, 2, new Uint8Array(4), new Uint8Array(3))).toThrow(RangeError);
-    expect(() => encodeIndexedPng(0, 2, new Uint8Array(4), new Uint8Array(0))).toThrow(RangeError);
-    expect(() => encodeIndexedPng(2 ** 31, 1, new Uint8Array(4), new Uint8Array(0))).toThrow(
-      RangeError,
+    expect(() => encodeIndexedPngSync(2, 2, new Uint8Array(4), new Uint8Array(4))).toThrow(
+      TypeError,
     );
-    expect(() => encodeIndexedPng(2, 2, new Uint8Array(6), new Uint8Array(4))).toThrow(RangeError);
-    expect(() => encodeIndexedPng(2, 2, new Uint8Array(4), [0, 0, 0, 0] as never)).toThrow(
-      RangeError,
-    );
-    expect(() =>
-      encodeIndexedPng(2, 2, new Uint8Array(4), new Uint8Array(4), { level: 11 as never }),
-    ).toThrow(RangeError);
+    await expect(
+      encodeIndexedPng(2, 2, new Uint8Array(4), new Uint8Array(3), { deflate }),
+    ).rejects.toThrow(RangeError);
     expect(() => createPalette([1, 2, 3, 4] as never)).toThrow(TypeError);
   });
 });
 
 describe('lower-level API', () => {
-  it('createPalette, applyPalette and encodeIndexedPng compose to the same file as quantize', () => {
+  it('createPalette, applyPalette and encodeIndexedPng compose to the same file as quantize', async () => {
     const rgba = gradient(120, 30, [255, 0, 0], [0, 0, 255]);
     const whole = quantize(rgba, 120, 30, { maxColors: 16 });
     const p = createPalette(rgba, { maxColors: 16 });
@@ -348,7 +388,10 @@ describe('lower-level API', () => {
     expect(p.transparentIndex).toBe(-1);
     const indices = applyPalette(rgba, 120, 30, p.palette);
     expect(indices).toEqual(whole.indices);
-    expect(encodeIndexedPng(120, 30, p.palette, indices)).toEqual(whole.png);
+    expect(encodeIndexedPngSync(120, 30, p.palette, indices, { deflate })).toEqual(whole.png);
+    expect(await encodeIndexedPng(120, 30, p.palette, indices, { deflate })).toEqual(whole.png);
+    const native = await encodeIndexedPng(120, 30, p.palette, indices);
+    expect(readPng(native).indices).toEqual(indices);
   });
 
   it('applyPalette takes any palette, dithers on request and honours transparentIndex', () => {
@@ -360,7 +403,7 @@ describe('lower-level API', () => {
     expect(new Set(plain.subarray(1))).toEqual(new Set([1, 2]));
     const dithered = applyPalette(rgba, 64, 8, palette, { dither: 1, transparentIndex: 0 });
     expect(dithered).not.toEqual(plain);
-    const png = readPng(encodeIndexedPng(64, 8, palette, dithered, { level: 6 }));
+    const png = readPng(encodeIndexedPngSync(64, 8, palette, dithered, { deflate }));
     expect(png.depth).toBe(2);
   });
 

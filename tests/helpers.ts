@@ -1,8 +1,11 @@
 /** Test helpers: a tiny PNG reader for our own output, deterministic images, independent decoders. */
-import { unzlibSync } from 'fflate';
+import { unzlibSync, zlibSync } from 'fflate';
 import { PNG } from 'pngjs';
 import sharp from 'sharp';
 import { crc32 } from '../src/png.js';
+
+/** The deterministic compressor the tests and Konvetto use: fflate at level 9. */
+export const deflate = (raw: Uint8Array): Uint8Array => zlibSync(raw, { level: 9 });
 
 export function readPng(png: Uint8Array) {
   const view = new DataView(png.buffer, png.byteOffset, png.byteLength);

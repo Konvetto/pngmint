@@ -1,14 +1,13 @@
 [
   {
-    "name": "quantize (ESM, with fflate)",
+    "name": "quantize (ESM, minified and brotlied)",
     "path": "dist/index.js",
     "import": "{ quantize }",
-    "limit": "10 kB"
+    "limit": "6 kB"
   },
   {
-    "name": "whole module, fflate external",
+    "name": "whole module",
     "path": "dist/index.js",
-    "ignore": ["fflate"],
-    "limit": "7 kB"
+    "limit": "6 kB"
   }
 ]

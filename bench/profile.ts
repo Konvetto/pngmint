@@ -5,9 +5,10 @@ import { performance } from 'node:perf_hooks';
 import sharp from 'sharp';
 import { histogram } from '../src/histogram.js';
 import { finish, medianCut, refine } from '../src/palette.js';
-import { writePng } from '../src/png.js';
+import { nativeDeflate, writePng } from '../src/png.js';
 import { remap } from '../src/remap.js';
-import { quantize } from '../src/index.js';
+import { quantizeSync } from '../src/index.js';
+import { zlibSync } from 'fflate';
 
 const [file, colorsArg = '256', ditherArg = '0'] = process.argv.slice(2);
 if (!file) throw new Error('usage: profile.ts <image> [colors] [dither]');
@@ -43,12 +44,22 @@ for (let round = 0; round < 2; round++) {
     remap(rgba, width, height, matched, { dither });
     lap(`remap, dither ${dither}`);
   }
-  const png = writePng(width, height, straight, plain, 9);
-  lap(`writePng level 9 (${(png.length / 1024).toFixed(0)} kB)`);
-  const png6 = writePng(width, height, straight, plain, 6);
-  lap(`writePng level 6 (${(png6.length / 1024).toFixed(0)} kB)`);
+  const png = writePng(width, height, straight, plain, (raw) =>
+    zlibSync(raw, { level: 9 }),
+  ) as Uint8Array;
+  lap(`writePng fflate 9 (${(png.length / 1024).toFixed(0)} kB)`);
+  const png6 = writePng(width, height, straight, plain, (raw) =>
+    zlibSync(raw, { level: 6 }),
+  ) as Uint8Array;
+  lap(`writePng fflate 6 (${(png6.length / 1024).toFixed(0)} kB)`);
+  const pngN = await writePng(width, height, straight, plain, nativeDeflate);
+  lap(`writePng CompressionStream (${(pngN.length / 1024).toFixed(0)} kB)`);
   const t = performance.now();
-  const q = quantize(rgba, width, height, { maxColors: colors, dither });
+  const q = quantizeSync(rgba, width, height, {
+    maxColors: colors,
+    dither,
+    deflate: (raw) => zlibSync(raw, { level: 9 }),
+  });
   console.log(
     `  quantize() total ${(performance.now() - t).toFixed(0)} ms, ${q.colors} colours, ${(q.png.length / 1024).toFixed(0)} kB`,
   );

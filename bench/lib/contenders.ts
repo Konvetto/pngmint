@@ -7,7 +7,15 @@ import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import * as iq from 'image-q';
 import UPNG from 'upng-js';
-import { quantize } from '../../src/index.js';
+import { zlibSync } from 'fflate';
+import { quantizeSync } from '../../src/index.js';
+import pkg from '../../package.json' with { type: 'json' };
+
+/** The package name, so that renaming the package touches package.json and README only. */
+export const NAME: string = pkg.name;
+
+/** fflate at level 9: what Konvetto passes in production and what the tables measure. */
+export const deflate = (raw: Uint8Array): Uint8Array => zlibSync(raw, { level: 9 });
 
 const require = createRequire(import.meta.url);
 
@@ -29,10 +37,10 @@ const dither = (colors: number) =>
   colors >= 256 ? 0 : colors >= 128 ? 0.4 : colors >= 64 ? 0.65 : 0.6;
 
 const pigmint: Contender = {
-  name: 'pigmint',
+  name: NAME,
   lossy: true,
   run: (rgba, w, h, colors) =>
-    quantize(rgba, w, h, { maxColors: colors, dither: dither(colors) }).png,
+    quantizeSync(rgba, w, h, { maxColors: colors, dither: dither(colors), deflate }).png,
 };
 
 const upng: Contender = {
@@ -47,7 +55,7 @@ const upng: Contender = {
 const imageQ: Contender = {
   name: 'image-q',
   lossy: true,
-  note: 'wuquant + floyd-steinberg; image-q has no PNG writer, its pixels are written losslessly by pigmint',
+  note: 'wuquant + floyd-steinberg; image-q has no PNG writer, its pixels are written losslessly by this package',
   run: (rgba, w, h, colors) => {
     const pc = iq.utils.PointContainer.fromUint8Array(rgba, w, h);
     const palette = iq.buildPaletteSync([pc], { colors, paletteQuantization: 'wuquant' });
@@ -56,7 +64,7 @@ const imageQ: Contender = {
     });
     const pixels = out.toUint8Array();
     // At most `colors` colours: this is an exact, lossless write.
-    return quantize(pixels, w, h, { maxColors: 256 }).png;
+    return quantizeSync(pixels, w, h, { maxColors: 256, deflate }).png;
   },
 };
 

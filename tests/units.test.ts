@@ -11,7 +11,7 @@ import {
 } from '../src/palette.js';
 import { bitDepth, crc32, writePng } from '../src/png.js';
 import { edges, remap } from '../src/remap.js';
-import { random, readPng } from './helpers.js';
+import { deflate, random, readPng } from './helpers.js';
 
 const px = (...colors: number[][]) => new Uint8Array(colors.flat());
 
@@ -212,7 +212,7 @@ describe('writePng', () => {
       const width = 13,
         height = 7; // odd sizes: rows end mid-byte at low depths
       const indices = new Uint8Array(width * height).map((_, i) => (i * 7) % colors);
-      const png = readPng(writePng(width, height, palette(colors), indices));
+      const png = readPng(writePng(width, height, palette(colors), indices, deflate) as Uint8Array);
       expect(png.signature).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
       expect(png.chunks.map((c) => c.type)).toEqual(['IHDR', 'PLTE', 'IDAT', 'IEND']);
       expect(png.chunks.every((c) => c.crcOk)).toBe(true);
@@ -231,7 +231,7 @@ describe('writePng', () => {
     const p = palette(4);
     p[3] = 0;
     p[7] = 128;
-    const png = readPng(writePng(2, 2, p, new Uint8Array([0, 1, 2, 3])));
+    const png = readPng(writePng(2, 2, p, new Uint8Array([0, 1, 2, 3]), deflate) as Uint8Array);
     const trns = png.chunks.find((c) => c.type === 'tRNS')!;
     expect([...trns.data]).toEqual([0, 128]);
     expect([...png.palette.subarray(8, 16)]).toEqual([...p.subarray(8, 16)]);

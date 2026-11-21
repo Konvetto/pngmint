@@ -1,4 +1,5 @@
 {
+  "agent": "png-palette-bench/0.1",
   "note": "Benchmark image set. Every file is public domain or CC0. `pnpm bench:images` downloads them into bench/images/ (not committed). Kodak images: 'Kodak Lossless True Color Image Suite', released by Eastman Kodak for unrestricted use. Wikimedia Commons files: CC0 1.0 by their uploaders, see each source page.",
   "images": [
     {

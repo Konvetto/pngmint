@@ -1,6 +1,10 @@
 /** Quality measures between two straight RGBA images of the same size. */
 import ssimPkg from 'ssim.js';
 
+// The CJS build exports an object with `ssim` and `default`; the types say a function.
+const ssimFn: typeof ssimPkg =
+  typeof ssimPkg === 'function' ? ssimPkg : (ssimPkg as unknown as { ssim: typeof ssimPkg }).ssim;
+
 /**
  * PSNR in dB, peak 255 per channel. Colours are compared premultiplied (what the eye sees over
  * any background) and alpha is a channel of its own when the source has transparency.
@@ -37,5 +41,5 @@ function overWhite(rgba: Uint8Array): Uint8ClampedArray {
 /** Mean SSIM (ssim.js, Wang et al. 2004) on grayscale, both images flattened over white. */
 export function ssimOverWhite(a: Uint8Array, b: Uint8Array, width: number, height: number): number {
   const img = (data: Uint8ClampedArray) => ({ data, width, height });
-  return ssimPkg(img(overWhite(a)), img(overWhite(b)), { ssim: 'fast' }).mssim;
+  return ssimFn(img(overWhite(a)), img(overWhite(b)), { ssim: 'fast' }).mssim;
 }

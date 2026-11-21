@@ -1,7 +1,8 @@
 /** Output files checked by decoders we did not write: pngjs (pure JS, CRCs) and sharp (libvips). */
 import { describe, expect, it } from 'vitest';
-import { presets, quantize } from '../src/index.js';
+import { presets, quantize, quantizeSync } from '../src/index.js';
 import {
+  deflate,
   decodeWithPngjs,
   decodeWithSharp,
   expectSamePixels,
@@ -74,27 +75,31 @@ const cases: { name: string; w: number; h: number; rgba: Uint8Array; opts?: obje
 describe('independent decoders accept every file', () => {
   for (const c of cases) {
     it(c.name, async () => {
-      const q = quantize(c.rgba, c.w, c.h, c.opts);
-      const js = decodeWithPngjs(q.png);
-      const vips = await decodeWithSharp(q.png);
-      expect([js.width, js.height]).toEqual([c.w, c.h]);
-      expect([vips.width, vips.height]).toEqual([c.w, c.h]);
-      // Both decoders see the same pixels (sharp stores clear pixels as it likes).
-      expectSamePixels(js.rgba, vips.rgba);
-      if (q.exact) expectSamePixels(c.rgba, js.rgba);
-      else expect(mse(c.rgba, js.rgba)).toBeLessThan(2500);
+      const native = await quantize(c.rgba, c.w, c.h, c.opts);
+      const fflate = quantizeSync(c.rgba, c.w, c.h, { ...c.opts, deflate });
+      for (const q of [native, fflate]) {
+        const js = decodeWithPngjs(q.png);
+        const vips = await decodeWithSharp(q.png);
+        expect([js.width, js.height]).toEqual([c.w, c.h]);
+        expect([vips.width, vips.height]).toEqual([c.w, c.h]);
+        // Both decoders see the same pixels (sharp stores clear pixels as it likes).
+        expectSamePixels(js.rgba, vips.rgba);
+        if (q.exact) expectSamePixels(c.rgba, js.rgba);
+        else expect(mse(c.rgba, js.rgba)).toBeLessThan(2500);
+      }
+      expect(native.indices).toEqual(fflate.indices);
     });
   }
 
-  it('the chunk layout is minimal and in order', () => {
-    const png = quantize(
+  it('the chunk layout is minimal and in order', async () => {
+    const { png } = await quantize(
       flat(8, 8, [
         [0, 0, 0, 255],
         [0, 0, 0, 0],
       ]),
       8,
       8,
-    ).png;
+    );
     const types: string[] = [];
     for (let at = 8; at < png.length;) {
       const len = new DataView(png.buffer, png.byteOffset).getUint32(at);

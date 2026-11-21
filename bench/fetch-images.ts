@@ -10,6 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dir = join(here, 'images');
 
 interface Manifest {
+  agent: string;
   images: { file: string; url: string; license: string; source: string }[];
 }
 
@@ -29,7 +30,7 @@ for (const image of manifest.images) {
     continue;
   }
   const res = await fetch(image.url, {
-    headers: { 'user-agent': 'pigmint-bench/0.1 (https://konvetto.com; hello@konvetto.com)' },
+    headers: { 'user-agent': `${manifest.agent} (https://konvetto.com; hello@konvetto.com)` },
   });
   if (!res.ok) throw new Error(`${image.url}: HTTP ${res.status}`);
   const bytes = new Uint8Array(await res.arrayBuffer());

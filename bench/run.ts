@@ -1,5 +1,5 @@
 /**
- * Benchmark: pigmint against UPNG.js, image-q and libimagequant (wasm), with lossless oxipng as a
+ * Benchmark: this package against UPNG.js, image-q and libimagequant (wasm), with lossless oxipng as a
  * size reference. Every contender gets the same straight RGBA pixels and the same colour count.
  * Output files are decoded again with sharp (libvips) and compared with the original: PSNR
  * (premultiplied RGB, plus alpha when the source has any), SSIM (grayscale, over white) and
@@ -13,8 +13,8 @@ import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { quantize } from '../src/index.js';
-import { contenders, type Contender } from './lib/contenders.js';
+import { quantizeSync } from '../src/index.js';
+import { contenders, deflate, NAME, type Contender } from './lib/contenders.js';
 import { psnr, ssimOverWhite } from './lib/metrics.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -84,7 +84,7 @@ for (const image of manifest.images) {
   console.log(`\n${image.file} ${width}x${height} (${mp.toFixed(1)} MP, ${image.kind})`);
 
   const measure = async (c: Contender, colors: number) => {
-    if (mp > maxMp && c.name !== 'pigmint') return;
+    if (mp > maxMp && c.name !== NAME) return;
     let result: { out: Uint8Array; ms: number };
     try {
       result = await timeIt(() => c.run(rgba, width, height, colors));
@@ -138,17 +138,17 @@ for (const image of manifest.images) {
   {
     const { presets } = await import('../src/index.js');
     for (const [name, preset] of Object.entries(presets)) {
-      const r = await timeIt(() => quantize(rgba, width, height, preset).png);
+      const r = await timeIt(() => quantizeSync(rgba, width, height, { ...preset, deflate }).png);
       const decoded = await sharp(Buffer.from(r.out)).ensureAlpha().raw().toBuffer();
       const back = new Uint8Array(decoded.buffer, decoded.byteOffset, decoded.byteLength);
-      const q = quantize(rgba, width, height, preset);
+      const q = quantizeSync(rgba, width, height, { ...preset, deflate });
       rows.push({
         image: image.file,
         kind: image.kind,
         width,
         height,
         colors: q.colors,
-        library: `pigmint:${name}`,
+        library: `${NAME}:${name}`,
         bytes: r.out.length,
         psnr: psnr(rgba, back, channels),
         ssim: ssimOverWhite(rgba, back, width, height),

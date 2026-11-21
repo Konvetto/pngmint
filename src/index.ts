@@ -7,11 +7,11 @@
  */
 import { histogram, type Histogram, type Rgba } from './histogram.js';
 import { emptyPalette, finish, fromStraight, medianCut, refine, type Palette } from './palette.js';
-import { writePng, type DeflateLevel } from './png.js';
+import { nativeDeflate, writePng, type Deflate } from './png.js';
 import { remap } from './remap.js';
 
 export type { Rgba } from './histogram.js';
-export type { DeflateLevel } from './png.js';
+export { nativeDeflate, type Deflate } from './png.js';
 
 /** Options shared by {@link quantize} and {@link createPalette}. */
 export interface PaletteOptions {
@@ -34,8 +34,20 @@ export interface QuantizeOptions extends PaletteOptions {
    * fits well (quality above 42 dB). Default 0.
    */
   dither?: number;
-  /** Deflate level 0 to 9. Default 9, or 6 above 4 million pixels (about 0.5% larger, 40% faster). */
-  level?: DeflateLevel;
+  /**
+   * The compressor for the pixel rows: raw bytes in, a zlib stream out. Default: the platform's
+   * `CompressionStream('deflate')`, which is asynchronous and compresses at the engine's default
+   * level (about 2.5% larger than fflate at level 9 on our set). Pass `(raw) => zlibSync(raw,
+   * { level: 9 })` from fflate for the smallest files, deterministic bytes and the synchronous
+   * variants.
+   */
+  deflate?: Deflate;
+}
+
+/** Options for {@link encodeIndexedPng} and {@link encodeIndexedPngSync}. */
+export interface EncodeOptions {
+  /** See {@link QuantizeOptions.deflate}. */
+  deflate?: Deflate;
 }
 
 export interface PaletteResult {
@@ -78,8 +90,6 @@ export const presets = {
 const NO_DITHER_ABOVE = 42;
 /** Images with fewer colours are flat art or screenshots: never dithered. */
 const FLAT = 4096;
-/** Above this many pixels deflate runs at level 6 unless told otherwise. */
-const BIG = 4_000_000;
 /** PNG's limit for width and height. */
 const MAX_SIDE = 0x7fffffff;
 
@@ -122,9 +132,24 @@ function checkDither(dither: number | undefined): void {
     throw new RangeError(`dither must be a number from 0 to 1, got ${dither}`);
 }
 
-function checkLevel(level: number | undefined): void {
-  if (level !== undefined && (!isInt(level) || level < 0 || level > 9))
-    throw new RangeError(`level must be an integer from 0 to 9, got ${level}`);
+function checkDeflate(deflate: unknown): void {
+  if (deflate !== undefined && typeof deflate !== 'function')
+    throw new TypeError('deflate must be a function from raw bytes to a zlib stream');
+}
+
+/** Runs the writer with a hook that must answer synchronously. */
+function sync(
+  write: (deflate: Deflate) => Uint8Array | Promise<Uint8Array>,
+  deflate: Deflate | undefined,
+): Uint8Array {
+  if (!deflate)
+    throw new TypeError(
+      "the synchronous variant needs a synchronous deflate option, for example fflate's zlibSync",
+    );
+  const out = write(deflate);
+  if (!(out instanceof Uint8Array))
+    throw new TypeError('the deflate option returned a promise; use the asynchronous variant');
+  return out;
 }
 
 /**
@@ -268,14 +293,13 @@ export function applyPalette(
   });
 }
 
-/** Writes an indexed PNG from a palette (straight RGBA, 1 to 256 colours) and one index per pixel. */
-export function encodeIndexedPng(
+function checkEncode(
   width: number,
   height: number,
   palette: Uint8Array,
   indices: Uint8Array,
-  options: { level?: DeflateLevel } = {},
-): Uint8Array {
+  o: EncodeOptions,
+): void {
   if (!isInt(width) || !isInt(height) || width < 1 || height < 1)
     throw new RangeError(`width and height must be positive integers, got ${width}x${height}`);
   if (width > MAX_SIDE || height > MAX_SIDE)
@@ -288,27 +312,47 @@ export function encodeIndexedPng(
   for (let i = 0; i < indices.length; i++)
     if (indices[i]! >= colors)
       throw new RangeError(`index ${indices[i]} at pixel ${i} is outside the palette`);
-  checkLevel(options.level);
-  return writePng(width, height, palette, indices, options.level ?? 9);
+  checkDeflate(o.deflate);
 }
 
-/**
- * Quantizes straight RGBA pixels (as from `canvas.getImageData`) to an indexed PNG.
- *
- * An image with at most `maxColors` colours comes back lossless. With `minQuality` the palette
- * shrinks while the quality holds. The result carries the file, the palette, the indices and
- * the measured fit.
- */
-export function quantize(
+/** Writes an indexed PNG from a palette (straight RGBA, 1 to 256 colours) and one index per pixel. */
+export async function encodeIndexedPng(
+  width: number,
+  height: number,
+  palette: Uint8Array,
+  indices: Uint8Array,
+  options: EncodeOptions = {},
+): Promise<Uint8Array> {
+  checkEncode(width, height, palette, indices, options);
+  return writePng(width, height, palette, indices, options.deflate ?? nativeDeflate);
+}
+
+/** {@link encodeIndexedPng} with a synchronous `deflate` option (required). */
+export function encodeIndexedPngSync(
+  width: number,
+  height: number,
+  palette: Uint8Array,
+  indices: Uint8Array,
+  options: EncodeOptions = {},
+): Uint8Array {
+  checkEncode(width, height, palette, indices, options);
+  return sync((d) => writePng(width, height, palette, indices, d), options.deflate);
+}
+
+/** Everything but the file: palette, indices and fit, plus a writer for the file. */
+function quantizeCore(
   rgba: Rgba,
   width: number,
   height: number,
-  options: QuantizeOptions = {},
-): QuantizeResult {
+  options: QuantizeOptions,
+): {
+  result: Omit<QuantizeResult, 'png'>;
+  write: (d: Deflate) => Uint8Array | Promise<Uint8Array>;
+} {
   checkImage(rgba, width, height);
   checkPaletteOptions(options);
   checkDither(options.dither);
-  checkLevel(options.level);
+  checkDeflate(options.deflate);
   const h = histogram(rgba);
   const built = buildPalette(h, options);
   const { matched, flat, ...result } = built;
@@ -338,15 +382,48 @@ export function quantize(
     indices = indices.map((k) => to[k]!);
     transparentIndex = clear < 0 || !used[clear] ? -1 : to[clear]!;
   }
-  const level = options.level ?? (width * height > BIG ? 6 : 9);
   return {
-    ...result,
-    palette,
-    colors: palette.length / 4,
-    transparentIndex,
-    png: writePng(width, height, palette, indices, level),
-    width,
-    height,
-    indices,
+    result: {
+      ...result,
+      palette,
+      colors: palette.length / 4,
+      transparentIndex,
+      width,
+      height,
+      indices,
+    },
+    write: (d) => writePng(width, height, palette, indices, d),
   };
+}
+
+/**
+ * Quantizes straight RGBA pixels (as from `canvas.getImageData`) to an indexed PNG.
+ *
+ * An image with at most `maxColors` colours comes back lossless. With `minQuality` the palette
+ * shrinks while the quality holds. The result carries the file, the palette, the indices and
+ * the measured fit. The file is compressed with the platform's CompressionStream unless
+ * `options.deflate` brings another compressor.
+ */
+export async function quantize(
+  rgba: Rgba,
+  width: number,
+  height: number,
+  options: QuantizeOptions = {},
+): Promise<QuantizeResult> {
+  const { result, write } = quantizeCore(rgba, width, height, options);
+  return { ...result, png: await write(options.deflate ?? nativeDeflate) };
+}
+
+/**
+ * {@link quantize} without a promise: needs a synchronous `deflate` option, such as fflate's
+ * `(raw) => zlibSync(raw, { level: 9 })`.
+ */
+export function quantizeSync(
+  rgba: Rgba,
+  width: number,
+  height: number,
+  options: QuantizeOptions = {},
+): QuantizeResult {
+  const { result, write } = quantizeCore(rgba, width, height, options);
+  return { ...result, png: sync(write, options.deflate) };
 }

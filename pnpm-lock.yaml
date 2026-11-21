@@ -174,10 +174,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      fflate:
-        specifier: 0.8.3
-        version: 0.8.3
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: 0.18.5
@@ -203,6 +199,9 @@ importers:
       eslint:
         specifier: 10.15.0
         version: 10.15.0(supports-color@7.2.0)
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       image-q:
         specifier: 4.0.0
         version: 4.0.0
