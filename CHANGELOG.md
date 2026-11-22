@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0](https://github.com/Konvetto/pngmint/compare/v1.0.0...v1.1.0) (2026-11-22)
+
+
+### Features
+
+* add the filter option with libpng's adaptive row filter, off by default ([e1c9ee2](https://github.com/Konvetto/pngmint/commit/e1c9ee269bf6422b6530b9b1ca1343016f4ce3aa))
+
 ## [1.0.0](https://github.com/Konvetto/pngmint/compare/v0.1.0...v1.0.0) (2026-11-21)
 
 
