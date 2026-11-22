@@ -2,7 +2,7 @@
 
 # pngmint
 
-**Palette PNGs that stay sharp. Pure TypeScript, zero dependencies, 5 kB, no wasm.**
+**Palette PNGs that stay sharp. Pure TypeScript, zero dependencies, 6 kB, no wasm.**
 
 [![npm](https://img.shields.io/npm/v/pngmint)](https://www.npmjs.com/package/pngmint)
 [![bundle size](https://img.shields.io/bundlejs/size/pngmint?label=gzip)](https://bundlejs.com/?q=pngmint)
@@ -35,7 +35,7 @@ tables, method and the reproducible script are [below](#benchmarks).
 - **Deterministic**: the palette and every pixel index are the same on every run and platform.
   No random seeds, no timing, no threads. With a deterministic compressor (the `deflate` option,
   see below) the file bytes are too.
-- **Small**: zero dependencies, 14 kB minified, 5.7 kB gzipped, 5.2 kB brotli. Types included,
+- **Small**: zero dependencies, 15 kB minified, 6.1 kB gzipped, 5.5 kB brotli. Types included,
   tree-shakeable, `sideEffects: false`.
 - **Pluggable compression**: the file is deflated by the platform's `CompressionStream` out of
   the box; pass fflate at level 9 through the `deflate` option for 1 to 3 percent smaller files,
@@ -157,17 +157,49 @@ The gap is widest on tiny flat images (a 3.6 kB icon becomes 5.1 kB) and on scre
 9 percent), smallest on photos (+1 to 3 percent). Konvetto passes fflate; the default is for
 everyone who wants nothing else to install.
 
+### Row filters
+
+PNG can run one of five filters over each row before deflate (none, sub, up, average, Paeth).
+pngmint writes rows unfiltered by default, and the `filter` option switches on the adaptive
+per-row choice that libpng makes (the filter with the smallest sum of absolute differences, on
+the packed bytes of the row):
+
+```ts
+const { png } = await quantize(rgba, width, height, { ...presets.balanced, filter: 'adaptive' });
+```
+
+It is off by default because on palette indices it loses, as the PNG specification warns for
+indexed images: measured on the benchmark set at all four presets (56 files, same palette and
+indices in every column, only the writer differs; `pnpm tsx bench/filters.ts`, full table in
+[`bench/filters.md`](./bench/filters.md)):
+
+| Rows                       |  fflate level 9 | CompressionStream | Encode time (fflate 9) |
+| -------------------------- | --------------: | ----------------: | ---------------------: |
+| unfiltered (default)       |         35.7 MB |           36.4 MB |                 13.6 s |
+| adaptive filter per row    | 41.2 MB, +15.3% |   40.5 MB, +11.4% |                 18.9 s |
+| oxipng level 2 on the file |  33.4 MB, -6.6% |                   |                        |
+
+With fflate the adaptive filter made every one of the 56 files larger, with CompressionStream
+55 of them (from +0.4 percent on a 14 MP photo to +51 percent on a 4-bit pixel-art sprite; one
+screenshot came out 0.3 percent smaller), and the row pass took three times as long as plain
+packing. oxipng run afterwards on the unfiltered file saves 6.6 percent in total (5 to 8 percent
+per preset, 0 to 14.5 percent per image), and it saves the same bytes from the filtered file, so
+its gain comes from its deflate and whole-image strategy search, not from per-row filters. Pixels
+are identical in every column. If the last bytes matter, run oxipng on pngmint's output; the
+option is there for callers with other data or another compressor.
+
 ## Options
 
 `quantize(rgba, width, height, options?)` and `createPalette(rgba, options?)`:
 
-| Option       | Type        | Default             | What it does                                                                                                                                                                                                            |
-| ------------ | ----------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxColors`  | 2 to 256    | 256                 | Most palette entries. A fully transparent colour, when the image needs one, counts.                                                                                                                                     |
-| `minQuality` | number (dB) | off                 | Fewer colours while the fit stays above this. Measured like PSNR but against the image's own brightness range, so dark and pale images are judged fairly. 42 keeps screenshots lossless-looking; 32 is visibly reduced. |
-| `dither`     | 0 to 1      | 0                   | Floyd-Steinberg error diffusion on smooth areas only (sky, skin, gradients). Edges and text are never dithered, nor is flat art or a palette that already fits above 42 dB.                                             |
-| `rounds`     | integer     | 2                   | k-means rounds after median cut. 0 is plain median cut.                                                                                                                                                                 |
-| `deflate`    | function    | `CompressionStream` | Raw rows in, zlib stream out. Pixels never change, only size, time and whether `quantizeSync` is available.                                                                                                             |
+| Option       | Type                   | Default             | What it does                                                                                                                                                                                                            |
+| ------------ | ---------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxColors`  | 2 to 256               | 256                 | Most palette entries. A fully transparent colour, when the image needs one, counts.                                                                                                                                     |
+| `minQuality` | number (dB)            | off                 | Fewer colours while the fit stays above this. Measured like PSNR but against the image's own brightness range, so dark and pale images are judged fairly. 42 keeps screenshots lossless-looking; 32 is visibly reduced. |
+| `dither`     | 0 to 1                 | 0                   | Floyd-Steinberg error diffusion on smooth areas only (sky, skin, gradients). Edges and text are never dithered, nor is flat art or a palette that already fits above 42 dB.                                             |
+| `rounds`     | integer                | 2                   | k-means rounds after median cut. 0 is plain median cut.                                                                                                                                                                 |
+| `deflate`    | function               | `CompressionStream` | Raw rows in, zlib stream out. Pixels never change, only size, time and whether `quantizeSync` is available.                                                                                                             |
+| `filter`     | `'none'`, `'adaptive'` | `'none'`            | PNG row filters before deflate. `adaptive` is libpng's per-row choice; on palette indices it made the benchmark files 15 percent larger (see [Row filters](#row-filters)), so it is off unless asked for.               |
 
 Presets, the strength steps used in production:
 
@@ -201,7 +233,9 @@ three illustrations, two logos with transparency and one pixel-art sprite.
 Reproduce it: `pnpm bench:images && pnpm bench` (about 15 minutes; `--only kodim` or
 `--colors 256,64` for a quick look). Results land in `bench/out/results.md` and
 `bench/out/results.json`, with every output file next to them; the committed copy is
-[`bench/results.md`](./bench/results.md).
+[`bench/results.md`](./bench/results.md). `pnpm tsx bench/deflate.ts` compares the compressors
+and `pnpm tsx bench/filters.ts` the row filters and oxipng run afterwards
+([`bench/filters.md`](./bench/filters.md)).
 
 Method: every library gets the same decoded RGBA and the same colour count. pngmint runs as
 installed, with no options beyond colours and dithering, so its files come from the default
@@ -299,7 +333,7 @@ the group's images; PSNR and SSIM are means over the images where every library 
 - **Below 128 colours UPNG.js writes smaller files** (8 percent at 128, 18 percent at 64, 22 percent at 32 on photos) because it does not dither; it pays with lower PSNR (0.2 to 0.5 dB) and clearly lower SSIM (-0.007 to -0.024, visible banding in skies and skin). Dial `dither` down to 0 if bytes matter more than banding and you get most of that back.
 - **libimagequant has the best SSIM on photos at every colour count** (+0.004 to +0.005 over pngmint): its dithering covers the whole image with an adaptive strength, while pngmint dithers smooth areas only and clamps the carried error. Its PSNR is lower and its files 5 to 17 percent larger.
 - **Speed**: UPNG.js is the fastest on photos (0.6 to 0.9 of pngmint's time); pngmint is 1.7 to 2.7 times faster than the libimagequant wasm build and 10 to 15 times faster than image-q. On graphics pngmint is the fastest of the four at every count (UPNG.js 2.2 to 3.4 times slower, libimagequant 1.9 to 2.8 times).
-- **Lossless cases**: an image with at most 256 colours comes back pixel for pixel (`illustration-venn-diagram`, `pixelart-bird`). The file is then larger than oxipng's lossless output (151 kB against 128 kB), because oxipng tries PNG filters and a stronger deflate; pngmint writes rows unfiltered. If lossless size is the goal, run oxipng on the result.
+- **Lossless cases**: an image with at most 256 colours comes back pixel for pixel (`illustration-venn-diagram`, `pixelart-bird`). The file is then larger than oxipng's lossless output (151 kB against 128 kB), because oxipng searches whole-image strategies with a stronger deflate; pngmint writes rows unfiltered, and switching on PNG's per-row filters does not close the gap (it widens it, see [Row filters](#row-filters)). oxipng level 2 run on pngmint's output takes a further 6.6 percent off across the set. If lossless size is the goal, run oxipng on the result.
 - **Tiny files**: on a 1 MP icon with 9 colours the default compressor costs 1 kB (8.1 kB against 7.0 with the hook, 5.7 to 7.5 for the others). The hook closes that gap.
 
 ### Every image at 256 colours
@@ -348,7 +382,8 @@ Full per-image tables for 128, 64 and 32 colours and the presets are in
    palette entry do not turn into worms.
 6. **Write.** Palette entries no pixel uses are dropped. Entries are ordered fully transparent
    first (a short tRNS), then dark to light (neighbouring indices stay close, which helps
-   deflate). Rows go unfiltered at the smallest bit depth that fits; IDAT comes from
+   deflate). Rows go unfiltered at the smallest bit depth that fits, since every PNG filter made
+   palette files larger on the benchmark set (the adaptive one is an option); IDAT comes from
    `CompressionStream` or your `deflate` function.
 
 ## Limits

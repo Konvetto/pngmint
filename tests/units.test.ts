@@ -224,6 +224,11 @@ describe('writePng', () => {
       ]);
       expect(png.indices).toEqual(indices);
       expect(png.filters.every((f) => f === 0)).toBe(true);
+      const filtered = readPng(
+        writePng(width, height, palette(colors), indices, deflate, 'adaptive') as Uint8Array,
+      );
+      expect(filtered.indices).toEqual(indices);
+      expect(filtered.filters.every((f) => f >= 0 && f <= 4)).toBe(true);
     });
   }
 

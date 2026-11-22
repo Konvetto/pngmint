@@ -37,9 +37,11 @@ export function readPng(png: Uint8Array) {
   const bpl = Math.ceil((width * depth) / 8);
   const indices = new Uint8Array(width * height);
   const filters: number[] = [];
+  let above: Uint8Array = new Uint8Array(bpl);
   for (let y = 0; y < height; y++) {
     filters.push(raw[y * (bpl + 1)]!);
-    const line = raw.subarray(y * (bpl + 1) + 1, (y + 1) * (bpl + 1));
+    const line = unfilter(filters[y]!, raw.subarray(y * (bpl + 1) + 1, (y + 1) * (bpl + 1)), above);
+    above = line;
     const per = 8 / depth;
     for (let x = 0; x < width; x++) {
       indices[y * width + x] =
@@ -63,6 +65,29 @@ export function readPng(png: Uint8Array) {
     rgba,
     signature: [...png.subarray(0, 8)],
   };
+}
+
+/** Undoes a PNG row filter (bytes per pixel 1), as a decoder does. */
+function unfilter(type: number, line: Uint8Array, above: Uint8Array): Uint8Array {
+  const out = new Uint8Array(line.length);
+  for (let x = 0; x < line.length; x++) {
+    const a = x > 0 ? out[x - 1]! : 0,
+      b = above[x]!,
+      c = x > 0 ? above[x - 1]! : 0;
+    let pred = 0;
+    if (type === 1) pred = a;
+    else if (type === 2) pred = b;
+    else if (type === 3) pred = (a + b) >> 1;
+    else if (type === 4) {
+      const p = a + b - c;
+      const pa = Math.abs(p - a),
+        pb = Math.abs(p - b),
+        pc = Math.abs(p - c);
+      pred = pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+    } else if (type !== 0) throw new Error(`bad filter type ${type}`);
+    out[x] = (line[x]! + pred) & 255;
+  }
+  return out;
 }
 
 /** Straight RGBA as pngjs decodes it (pure JS, checks CRCs). */

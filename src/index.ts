@@ -7,11 +7,11 @@
  */
 import { histogram, type Histogram, type Rgba } from './histogram.js';
 import { emptyPalette, finish, fromStraight, medianCut, refine, type Palette } from './palette.js';
-import { nativeDeflate, writePng, type Deflate } from './png.js';
+import { nativeDeflate, writePng, type Deflate, type Filter } from './png.js';
 import { remap } from './remap.js';
 
 export type { Rgba } from './histogram.js';
-export { nativeDeflate, type Deflate } from './png.js';
+export { nativeDeflate, type Deflate, type Filter } from './png.js';
 
 /** Options shared by {@link quantize} and {@link createPalette}. */
 export interface PaletteOptions {
@@ -42,12 +42,20 @@ export interface QuantizeOptions extends PaletteOptions {
    * variants.
    */
   deflate?: Deflate;
+  /**
+   * PNG row filters before deflate. `none` (the default) writes raw rows: on palette indices
+   * the filters made the files larger on our set (15 percent in total). `adaptive` picks one of the five filters per
+   * row by the smallest sum of absolute differences, as libpng does; same pixels, other bytes.
+   */
+  filter?: Filter;
 }
 
 /** Options for {@link encodeIndexedPng} and {@link encodeIndexedPngSync}. */
 export interface EncodeOptions {
   /** See {@link QuantizeOptions.deflate}. */
   deflate?: Deflate;
+  /** See {@link QuantizeOptions.filter}. */
+  filter?: Filter;
 }
 
 export interface PaletteResult {
@@ -135,6 +143,11 @@ function checkDither(dither: number | undefined): void {
 function checkDeflate(deflate: unknown): void {
   if (deflate !== undefined && typeof deflate !== 'function')
     throw new TypeError('deflate must be a function from raw bytes to a zlib stream');
+}
+
+function checkFilter(filter: unknown): void {
+  if (filter !== undefined && filter !== 'adaptive' && filter !== 'none')
+    throw new RangeError("filter must be 'adaptive' or 'none'");
 }
 
 /** Runs the writer with a hook that must answer synchronously. */
@@ -313,6 +326,7 @@ function checkEncode(
     if (indices[i]! >= colors)
       throw new RangeError(`index ${indices[i]} at pixel ${i} is outside the palette`);
   checkDeflate(o.deflate);
+  checkFilter(o.filter);
 }
 
 /** Writes an indexed PNG from a palette (straight RGBA, 1 to 256 colours) and one index per pixel. */
@@ -324,7 +338,14 @@ export async function encodeIndexedPng(
   options: EncodeOptions = {},
 ): Promise<Uint8Array> {
   checkEncode(width, height, palette, indices, options);
-  return writePng(width, height, palette, indices, options.deflate ?? nativeDeflate);
+  return writePng(
+    width,
+    height,
+    palette,
+    indices,
+    options.deflate ?? nativeDeflate,
+    options.filter,
+  );
 }
 
 /** {@link encodeIndexedPng} with a synchronous `deflate` option (required). */
@@ -336,7 +357,7 @@ export function encodeIndexedPngSync(
   options: EncodeOptions = {},
 ): Uint8Array {
   checkEncode(width, height, palette, indices, options);
-  return sync((d) => writePng(width, height, palette, indices, d), options.deflate);
+  return sync((d) => writePng(width, height, palette, indices, d, options.filter), options.deflate);
 }
 
 /** Everything but the file: palette, indices and fit, plus a writer for the file. */
@@ -353,6 +374,7 @@ function quantizeCore(
   checkPaletteOptions(options);
   checkDither(options.dither);
   checkDeflate(options.deflate);
+  checkFilter(options.filter);
   const h = histogram(rgba);
   const built = buildPalette(h, options);
   const { matched, flat, ...result } = built;
@@ -392,7 +414,7 @@ function quantizeCore(
       height,
       indices,
     },
-    write: (d) => writePng(width, height, palette, indices, d),
+    write: (d) => writePng(width, height, palette, indices, d, options.filter),
   };
 }
 
