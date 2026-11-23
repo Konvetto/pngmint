@@ -4,3 +4,4 @@ pnpm-lock.yaml
 bench/images/
 bench/out/
 CHANGELOG.md
+CLAUDE.local.md
