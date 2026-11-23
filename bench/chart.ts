@@ -78,11 +78,13 @@ const THEMES: Record<'light' | 'dark', Theme> = {
   },
 };
 
-const W = 760;
-const H = 548;
+const W = 800;
+const H = 600;
 const FONT = 'system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif';
-// Names start at the column's left edge, like the headings; bars start after the longest name.
-const COL = { x: [28, 400], names: 104, bars: 170 };
+// Each group heading sits at the column's edge; metric titles and library names are indented
+// under it, and the bars start after the longest name.
+const INDENT = 14;
+const COL = { x: [32, 420], names: 108, bars: 136 };
 const BAR = 16;
 const STEP = 23;
 
@@ -130,16 +132,17 @@ function svg(rows: Row[], t: Theme): string {
   );
 
   const groups: [key: string, heading: string][] = [
-    ['photos', 'Photos, 5 images (0.4 to 14 MP)'],
-    ['graphics', 'Graphics, 9 images (screenshots, illustrations, logos)'],
+    ['photos', 'Photos, 5 images|0.4 to 14 MP'],
+    ['graphics', 'Graphics, 9 images|screenshots, illustrations, logos'],
   ];
   const headY = 78;
   groups.forEach(([key, heading], gi) => {
     const x = COL.x[gi]!;
     out.push(
-      `<text x="${x}" y="${headY}" font-weight="500" fill="${t.text}">${esc(heading)}</text>`,
+      `<text x="${x}" y="${headY}" font-size="15" font-weight="600" fill="${t.text}">${esc(heading.split('|')[0]!)}<tspan dx="8" font-size="11" font-weight="400" fill="${t.muted}">${esc(heading.split('|')[1] ?? '')}</tspan></text>`,
+      `<line x1="${x}" x2="${x + 348}" y1="${headY + 10}" y2="${headY + 10}" stroke="${t.grid}" stroke-width="1"/>`,
     );
-    let y = headY + 26;
+    let y = headY + 36;
     for (const m of METRICS) {
       const group = rows.filter((r) => r.group === key);
       const order = [NAME, 'upng-js', 'image-q', 'libimagequant'];
@@ -150,11 +153,11 @@ function svg(rows: Row[], t: Theme): string {
       const max = Math.max(...values);
       const min = Math.min(...values);
       out.push(
-        `<text x="${x}" y="${y}" fill="${t.text}" font-weight="500">${esc(m.title)}</text>`,
-        `<text x="${x}" y="${y + 15}" fill="${t.muted}" font-size="11">${esc(m.note)}</text>`,
+        `<text x="${x + INDENT}" y="${y}" fill="${t.ours}" font-size="12" font-weight="600" letter-spacing="0.06em">${esc(m.title.toUpperCase())}</text>`,
+        `<text x="${x + INDENT}" y="${y + 15}" fill="${t.muted}" font-size="11">${esc(m.note)}</text>`,
       );
       y += 28;
-      const bx = x + COL.names;
+      const bx = x + INDENT + COL.names;
       // Dot plots get a range line so the differences read against a scale, not a zero.
       const lo = m.kind === 'dot' ? Math.floor(min) - 1 : 0;
       const hi = m.kind === 'dot' ? Math.ceil(max) : max;
@@ -173,7 +176,7 @@ function svg(rows: Row[], t: Theme): string {
         const v = m.value(r);
         const color = ours ? t.ours : t.other;
         out.push(
-          `<text x="${x}" y="${cy + 4}" fill="${ours ? t.text : t.muted}" font-weight="${ours ? 500 : 400}">${esc(DISPLAY[r.library] ?? r.library)}</text>`,
+          `<text x="${x + INDENT}" y="${cy + 4}" fill="${ours ? t.text : t.muted}" font-weight="${ours ? 500 : 400}">${esc(DISPLAY[r.library] ?? r.library)}</text>`,
         );
         if (m.kind === 'bar') {
           const wBar = Math.max(2, scale(v) - bx);
@@ -189,12 +192,13 @@ function svg(rows: Row[], t: Theme): string {
           );
         }
       });
-      y += items.length * STEP + (m.kind === 'dot' ? 26 : 14);
+      y += items.length * STEP + (m.kind === 'dot' ? 34 : 22);
     }
   });
   out.push(
-    `<text x="${COL.x[0]}" y="${H - 32}" fill="${t.muted}" font-size="11">Graphics PSNR is the mean over the 7 images every library encodes with a loss; 2 are lossless for ${NAME}.</text>`,
-    `<text x="${COL.x[0]}" y="${H - 16}" fill="${t.muted}" font-size="11">Below 128 colors UPNG.js writes smaller photo files than ${NAME}, without dithering. libimagequant runs as wasm. Full tables: bench/results.md.</text>`,
+    `<text x="${COL.x[0]}" y="${H - 48}" fill="${t.muted}" font-size="11">Graphics PSNR is the mean over the 7 images every library encodes with a loss; 2 are lossless for ${NAME}.</text>`,
+    `<text x="${COL.x[0]}" y="${H - 32}" fill="${t.muted}" font-size="11">Below 128 colors UPNG.js writes smaller photo files than ${NAME}, without dithering.</text>`,
+    `<text x="${COL.x[0]}" y="${H - 16}" fill="${t.muted}" font-size="11">libimagequant runs as wasm. Full tables: bench/results.md.</text>`,
     '</svg>',
     '',
   );

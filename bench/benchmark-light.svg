@@ -1,110 +1,113 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 548" width="760" height="548" font-family='system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif' font-size="13">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" font-family='system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif' font-size="13">
 <title>Four PNG quantizers at 256 colors: file size, PSNR and time</title>
-<rect width="760" height="548" rx="12" fill="#fcfcfb"/>
-<text x="28" y="28" font-size="16" font-weight="500" fill="#0b0b0b">Four palette quantizers at 256 colors, same pixels in, same color count</text>
-<text x="28" y="46" fill="#52514e">14 public-domain images, Node 26, Apple Silicon laptop, median of 3 runs. pngmint as installed, default compressor.</text>
-<text x="28" y="78" font-weight="500" fill="#0b0b0b">Photos, 5 images (0.4 to 14 MP)</text>
-<text x="28" y="104" fill="#0b0b0b" font-weight="500">File size</text>
-<text x="28" y="119" fill="#52514e" font-size="11">sum of the group, lower is better</text>
-<text x="28" y="144" fill="#0b0b0b" font-weight="500">pngmint</text>
-<rect x="132" y="132" width="142.2" height="16" rx="3" fill="#2a78d6"/>
-<text x="282.2" y="144" fill="#0b0b0b" font-size="12">9.6 MB</text>
-<text x="28" y="167" fill="#52514e" font-weight="400">UPNG.js</text>
-<rect x="132" y="155" width="144.6" height="16" rx="3" fill="#9a9994"/>
-<text x="284.6" y="167" fill="#52514e" font-size="12">9.8 MB</text>
-<text x="28" y="190" fill="#52514e" font-weight="400">image-q</text>
-<rect x="132" y="178" width="143.6" height="16" rx="3" fill="#9a9994"/>
-<text x="283.6" y="190" fill="#52514e" font-size="12">9.7 MB</text>
-<text x="28" y="213" fill="#52514e" font-weight="400">libimagequant</text>
-<rect x="132" y="201" width="170.0" height="16" rx="3" fill="#9a9994"/>
-<text x="310.0" y="213" fill="#52514e" font-size="12">11.5 MB</text>
-<text x="28" y="238" fill="#0b0b0b" font-weight="500">Closeness to the original</text>
-<text x="28" y="253" fill="#52514e" font-size="11">PSNR in dB, mean of the group, higher is better</text>
-<line x1="132" x2="132" y1="264" y2="352" stroke="#e4e3df" stroke-width="1"/>
-<text x="132" y="364" text-anchor="middle" fill="#52514e" font-size="11">35 dB</text>
-<line x1="302" x2="302" y1="264" y2="352" stroke="#e4e3df" stroke-width="1"/>
-<text x="302" y="364" text-anchor="middle" fill="#52514e" font-size="11">38 dB</text>
-<text x="28" y="278" fill="#0b0b0b" font-weight="500">pngmint</text>
-<line x1="132" x2="289.5" y1="274" y2="274" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="289.5" cy="274" r="6" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
-<text x="300.5" y="278" fill="#0b0b0b" font-size="12">37.78 dB</text>
-<text x="28" y="301" fill="#52514e" font-weight="400">UPNG.js</text>
-<line x1="132" x2="247.6" y1="297" y2="297" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="247.6" cy="297" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
-<text x="258.6" y="301" fill="#52514e" font-size="12">37.04 dB</text>
-<text x="28" y="324" fill="#52514e" font-weight="400">image-q</text>
-<line x1="132" x2="225.5" y1="320" y2="320" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="225.5" cy="320" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
-<text x="236.5" y="324" fill="#52514e" font-size="12">36.65 dB</text>
-<text x="28" y="347" fill="#52514e" font-weight="400">libimagequant</text>
-<line x1="132" x2="207.9" y1="343" y2="343" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="207.9" cy="343" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
-<text x="218.9" y="347" fill="#52514e" font-size="12">36.34 dB</text>
-<text x="28" y="384" fill="#0b0b0b" font-weight="500">Time</text>
-<text x="28" y="399" fill="#52514e" font-size="11">sum of the group, lower is better</text>
-<text x="28" y="424" fill="#0b0b0b" font-weight="500">pngmint</text>
-<rect x="132" y="412" width="15.0" height="16" rx="3" fill="#2a78d6"/>
-<text x="155.0" y="424" fill="#0b0b0b" font-size="12">3623 ms</text>
-<text x="28" y="447" fill="#52514e" font-weight="400">UPNG.js</text>
-<rect x="132" y="435" width="18.3" height="16" rx="3" fill="#9a9994"/>
-<text x="158.3" y="447" fill="#52514e" font-size="12">4429 ms</text>
-<text x="28" y="470" fill="#52514e" font-weight="400">image-q</text>
-<rect x="132" y="458" width="170.0" height="16" rx="3" fill="#9a9994"/>
-<text x="310.0" y="470" fill="#52514e" font-size="12">41.1 s</text>
-<text x="28" y="493" fill="#52514e" font-weight="400">libimagequant</text>
-<rect x="132" y="481" width="32.8" height="16" rx="3" fill="#9a9994"/>
-<text x="172.8" y="493" fill="#52514e" font-size="12">7927 ms</text>
-<text x="400" y="78" font-weight="500" fill="#0b0b0b">Graphics, 9 images (screenshots, illustrations, logos)</text>
-<text x="400" y="104" fill="#0b0b0b" font-weight="500">File size</text>
-<text x="400" y="119" fill="#52514e" font-size="11">sum of the group, lower is better</text>
-<text x="400" y="144" fill="#0b0b0b" font-weight="500">pngmint</text>
-<rect x="504" y="132" width="154.5" height="16" rx="3" fill="#2a78d6"/>
-<text x="666.5" y="144" fill="#0b0b0b" font-size="12">2.0 MB</text>
-<text x="400" y="167" fill="#52514e" font-weight="400">UPNG.js</text>
-<rect x="504" y="155" width="163.6" height="16" rx="3" fill="#9a9994"/>
-<text x="675.6" y="167" fill="#52514e" font-size="12">2.1 MB</text>
-<text x="400" y="190" fill="#52514e" font-weight="400">image-q</text>
-<rect x="504" y="178" width="148.1" height="16" rx="3" fill="#9a9994"/>
-<text x="660.1" y="190" fill="#52514e" font-size="12">1.9 MB</text>
-<text x="400" y="213" fill="#52514e" font-weight="400">libimagequant</text>
-<rect x="504" y="201" width="170.0" height="16" rx="3" fill="#9a9994"/>
-<text x="682.0" y="213" fill="#52514e" font-size="12">2.2 MB</text>
-<text x="400" y="238" fill="#0b0b0b" font-weight="500">Closeness to the original</text>
-<text x="400" y="253" fill="#52514e" font-size="11">PSNR in dB, mean of the group, higher is better</text>
-<line x1="504" x2="504" y1="264" y2="352" stroke="#e4e3df" stroke-width="1"/>
-<text x="504" y="364" text-anchor="middle" fill="#52514e" font-size="11">47 dB</text>
-<line x1="674" x2="674" y1="264" y2="352" stroke="#e4e3df" stroke-width="1"/>
-<text x="674" y="364" text-anchor="middle" fill="#52514e" font-size="11">59 dB</text>
-<text x="400" y="278" fill="#0b0b0b" font-weight="500">pngmint</text>
-<line x1="504" x2="671.3" y1="274" y2="274" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="671.3" cy="274" r="6" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
-<text x="682.3" y="278" fill="#0b0b0b" font-size="12">58.81 dB</text>
-<text x="400" y="301" fill="#52514e" font-weight="400">UPNG.js</text>
-<line x1="504" x2="648.1" y1="297" y2="297" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="648.1" cy="297" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
-<text x="659.1" y="301" fill="#52514e" font-size="12">57.17 dB</text>
-<text x="400" y="324" fill="#52514e" font-weight="400">image-q</text>
-<line x1="504" x2="519.3" y1="320" y2="320" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="519.3" cy="320" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
-<text x="530.3" y="324" fill="#52514e" font-size="12">48.08 dB</text>
-<text x="400" y="347" fill="#52514e" font-weight="400">libimagequant</text>
-<line x1="504" x2="623.3" y1="343" y2="343" stroke="#e4e3df" stroke-width="1"/>
-<circle cx="623.3" cy="343" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
-<text x="634.3" y="347" fill="#52514e" font-size="12">55.42 dB</text>
-<text x="400" y="384" fill="#0b0b0b" font-weight="500">Time</text>
-<text x="400" y="399" fill="#52514e" font-size="11">sum of the group, lower is better</text>
-<text x="400" y="424" fill="#0b0b0b" font-weight="500">pngmint</text>
-<rect x="504" y="412" width="5.3" height="16" rx="3" fill="#2a78d6"/>
-<text x="517.3" y="424" fill="#0b0b0b" font-size="12">1191 ms</text>
-<text x="400" y="447" fill="#52514e" font-weight="400">UPNG.js</text>
-<rect x="504" y="435" width="10.4" height="16" rx="3" fill="#9a9994"/>
-<text x="522.4" y="447" fill="#52514e" font-size="12">2338 ms</text>
-<text x="400" y="470" fill="#52514e" font-weight="400">image-q</text>
-<rect x="504" y="458" width="170.0" height="16" rx="3" fill="#9a9994"/>
-<text x="682.0" y="470" fill="#52514e" font-size="12">38.3 s</text>
-<text x="400" y="493" fill="#52514e" font-weight="400">libimagequant</text>
-<rect x="504" y="481" width="12.4" height="16" rx="3" fill="#9a9994"/>
-<text x="524.4" y="493" fill="#52514e" font-size="12">2804 ms</text>
-<text x="28" y="516" fill="#52514e" font-size="11">Graphics PSNR is the mean over the 7 images every library encodes with a loss; 2 are lossless for pngmint.</text>
-<text x="28" y="532" fill="#52514e" font-size="11">Below 128 colors UPNG.js writes smaller photo files than pngmint, without dithering. libimagequant runs as wasm. Full tables: bench/results.md.</text>
+<rect width="800" height="600" rx="12" fill="#fcfcfb"/>
+<text x="32" y="28" font-size="16" font-weight="500" fill="#0b0b0b">Four palette quantizers at 256 colors, same pixels in, same color count</text>
+<text x="32" y="46" fill="#52514e">14 public-domain images, Node 26, Apple Silicon laptop, median of 3 runs. pngmint as installed, default compressor.</text>
+<text x="32" y="78" font-size="15" font-weight="600" fill="#0b0b0b">Photos, 5 images<tspan dx="8" font-size="11" font-weight="400" fill="#52514e">0.4 to 14 MP</tspan></text>
+<line x1="32" x2="380" y1="88" y2="88" stroke="#e4e3df" stroke-width="1"/>
+<text x="46" y="114" fill="#2a78d6" font-size="12" font-weight="600" letter-spacing="0.06em">FILE SIZE</text>
+<text x="46" y="129" fill="#52514e" font-size="11">sum of the group, lower is better</text>
+<text x="46" y="154" fill="#0b0b0b" font-weight="500">pngmint</text>
+<rect x="154" y="142" width="113.8" height="16" rx="3" fill="#2a78d6"/>
+<text x="275.8" y="154" fill="#0b0b0b" font-size="12">9.6 MB</text>
+<text x="46" y="177" fill="#52514e" font-weight="400">UPNG.js</text>
+<rect x="154" y="165" width="115.7" height="16" rx="3" fill="#9a9994"/>
+<text x="277.7" y="177" fill="#52514e" font-size="12">9.8 MB</text>
+<text x="46" y="200" fill="#52514e" font-weight="400">image-q</text>
+<rect x="154" y="188" width="114.9" height="16" rx="3" fill="#9a9994"/>
+<text x="276.9" y="200" fill="#52514e" font-size="12">9.7 MB</text>
+<text x="46" y="223" fill="#52514e" font-weight="400">libimagequant</text>
+<rect x="154" y="211" width="136.0" height="16" rx="3" fill="#9a9994"/>
+<text x="298.0" y="223" fill="#52514e" font-size="12">11.5 MB</text>
+<text x="46" y="256" fill="#2a78d6" font-size="12" font-weight="600" letter-spacing="0.06em">CLOSENESS TO THE ORIGINAL</text>
+<text x="46" y="271" fill="#52514e" font-size="11">PSNR in dB, mean of the group, higher is better</text>
+<line x1="154" x2="154" y1="282" y2="370" stroke="#e4e3df" stroke-width="1"/>
+<text x="154" y="382" text-anchor="middle" fill="#52514e" font-size="11">35 dB</text>
+<line x1="290" x2="290" y1="282" y2="370" stroke="#e4e3df" stroke-width="1"/>
+<text x="290" y="382" text-anchor="middle" fill="#52514e" font-size="11">38 dB</text>
+<text x="46" y="296" fill="#0b0b0b" font-weight="500">pngmint</text>
+<line x1="154" x2="280.0" y1="292" y2="292" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="280.0" cy="292" r="6" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="291.0" y="296" fill="#0b0b0b" font-size="12">37.78 dB</text>
+<text x="46" y="319" fill="#52514e" font-weight="400">UPNG.js</text>
+<line x1="154" x2="246.5" y1="315" y2="315" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="246.5" cy="315" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
+<text x="257.5" y="319" fill="#52514e" font-size="12">37.04 dB</text>
+<text x="46" y="342" fill="#52514e" font-weight="400">image-q</text>
+<line x1="154" x2="228.8" y1="338" y2="338" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="228.8" cy="338" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
+<text x="239.8" y="342" fill="#52514e" font-size="12">36.65 dB</text>
+<text x="46" y="365" fill="#52514e" font-weight="400">libimagequant</text>
+<line x1="154" x2="214.7" y1="361" y2="361" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="214.7" cy="361" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
+<text x="225.7" y="365" fill="#52514e" font-size="12">36.34 dB</text>
+<text x="46" y="410" fill="#2a78d6" font-size="12" font-weight="600" letter-spacing="0.06em">TIME</text>
+<text x="46" y="425" fill="#52514e" font-size="11">sum of the group, lower is better</text>
+<text x="46" y="450" fill="#0b0b0b" font-weight="500">pngmint</text>
+<rect x="154" y="438" width="12.0" height="16" rx="3" fill="#2a78d6"/>
+<text x="174.0" y="450" fill="#0b0b0b" font-size="12">3623 ms</text>
+<text x="46" y="473" fill="#52514e" font-weight="400">UPNG.js</text>
+<rect x="154" y="461" width="14.6" height="16" rx="3" fill="#9a9994"/>
+<text x="176.6" y="473" fill="#52514e" font-size="12">4429 ms</text>
+<text x="46" y="496" fill="#52514e" font-weight="400">image-q</text>
+<rect x="154" y="484" width="136.0" height="16" rx="3" fill="#9a9994"/>
+<text x="298.0" y="496" fill="#52514e" font-size="12">41.1 s</text>
+<text x="46" y="519" fill="#52514e" font-weight="400">libimagequant</text>
+<rect x="154" y="507" width="26.2" height="16" rx="3" fill="#9a9994"/>
+<text x="188.2" y="519" fill="#52514e" font-size="12">7927 ms</text>
+<text x="420" y="78" font-size="15" font-weight="600" fill="#0b0b0b">Graphics, 9 images<tspan dx="8" font-size="11" font-weight="400" fill="#52514e">screenshots, illustrations, logos</tspan></text>
+<line x1="420" x2="768" y1="88" y2="88" stroke="#e4e3df" stroke-width="1"/>
+<text x="434" y="114" fill="#2a78d6" font-size="12" font-weight="600" letter-spacing="0.06em">FILE SIZE</text>
+<text x="434" y="129" fill="#52514e" font-size="11">sum of the group, lower is better</text>
+<text x="434" y="154" fill="#0b0b0b" font-weight="500">pngmint</text>
+<rect x="542" y="142" width="123.6" height="16" rx="3" fill="#2a78d6"/>
+<text x="673.6" y="154" fill="#0b0b0b" font-size="12">2.0 MB</text>
+<text x="434" y="177" fill="#52514e" font-weight="400">UPNG.js</text>
+<rect x="542" y="165" width="130.9" height="16" rx="3" fill="#9a9994"/>
+<text x="680.9" y="177" fill="#52514e" font-size="12">2.1 MB</text>
+<text x="434" y="200" fill="#52514e" font-weight="400">image-q</text>
+<rect x="542" y="188" width="118.5" height="16" rx="3" fill="#9a9994"/>
+<text x="668.5" y="200" fill="#52514e" font-size="12">1.9 MB</text>
+<text x="434" y="223" fill="#52514e" font-weight="400">libimagequant</text>
+<rect x="542" y="211" width="136.0" height="16" rx="3" fill="#9a9994"/>
+<text x="686.0" y="223" fill="#52514e" font-size="12">2.2 MB</text>
+<text x="434" y="256" fill="#2a78d6" font-size="12" font-weight="600" letter-spacing="0.06em">CLOSENESS TO THE ORIGINAL</text>
+<text x="434" y="271" fill="#52514e" font-size="11">PSNR in dB, mean of the group, higher is better</text>
+<line x1="542" x2="542" y1="282" y2="370" stroke="#e4e3df" stroke-width="1"/>
+<text x="542" y="382" text-anchor="middle" fill="#52514e" font-size="11">47 dB</text>
+<line x1="678" x2="678" y1="282" y2="370" stroke="#e4e3df" stroke-width="1"/>
+<text x="678" y="382" text-anchor="middle" fill="#52514e" font-size="11">59 dB</text>
+<text x="434" y="296" fill="#0b0b0b" font-weight="500">pngmint</text>
+<line x1="542" x2="675.8" y1="292" y2="292" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="675.8" cy="292" r="6" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="686.8" y="296" fill="#0b0b0b" font-size="12">58.81 dB</text>
+<text x="434" y="319" fill="#52514e" font-weight="400">UPNG.js</text>
+<line x1="542" x2="657.3" y1="315" y2="315" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="657.3" cy="315" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
+<text x="668.3" y="319" fill="#52514e" font-size="12">57.17 dB</text>
+<text x="434" y="342" fill="#52514e" font-weight="400">image-q</text>
+<line x1="542" x2="554.2" y1="338" y2="338" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="554.2" cy="338" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
+<text x="565.2" y="342" fill="#52514e" font-size="12">48.08 dB</text>
+<text x="434" y="365" fill="#52514e" font-weight="400">libimagequant</text>
+<line x1="542" x2="637.4" y1="361" y2="361" stroke="#e4e3df" stroke-width="1"/>
+<circle cx="637.4" cy="361" r="6" fill="#9a9994" stroke="#fcfcfb" stroke-width="2"/>
+<text x="648.4" y="365" fill="#52514e" font-size="12">55.42 dB</text>
+<text x="434" y="410" fill="#2a78d6" font-size="12" font-weight="600" letter-spacing="0.06em">TIME</text>
+<text x="434" y="425" fill="#52514e" font-size="11">sum of the group, lower is better</text>
+<text x="434" y="450" fill="#0b0b0b" font-weight="500">pngmint</text>
+<rect x="542" y="438" width="4.2" height="16" rx="3" fill="#2a78d6"/>
+<text x="554.2" y="450" fill="#0b0b0b" font-size="12">1191 ms</text>
+<text x="434" y="473" fill="#52514e" font-weight="400">UPNG.js</text>
+<rect x="542" y="461" width="8.3" height="16" rx="3" fill="#9a9994"/>
+<text x="558.3" y="473" fill="#52514e" font-size="12">2338 ms</text>
+<text x="434" y="496" fill="#52514e" font-weight="400">image-q</text>
+<rect x="542" y="484" width="136.0" height="16" rx="3" fill="#9a9994"/>
+<text x="686.0" y="496" fill="#52514e" font-size="12">38.3 s</text>
+<text x="434" y="519" fill="#52514e" font-weight="400">libimagequant</text>
+<rect x="542" y="507" width="9.9" height="16" rx="3" fill="#9a9994"/>
+<text x="559.9" y="519" fill="#52514e" font-size="12">2804 ms</text>
+<text x="32" y="552" fill="#52514e" font-size="11">Graphics PSNR is the mean over the 7 images every library encodes with a loss; 2 are lossless for pngmint.</text>
+<text x="32" y="568" fill="#52514e" font-size="11">Below 128 colors UPNG.js writes smaller photo files than pngmint, without dithering.</text>
+<text x="32" y="584" fill="#52514e" font-size="11">libimagequant runs as wasm. Full tables: bench/results.md.</text>
 </svg>
