@@ -5,7 +5,7 @@
 <text x="28" y="46" fill="#c3c2b7">14 public-domain images, Node 26, Apple Silicon laptop, median of 3 runs. pngmint as installed, default compressor.</text>
 <text x="28" y="78" font-weight="500" fill="#f0efec">Photos, 5 images (0.4 to 14 MP)</text>
 <text x="28" y="104" fill="#f0efec" font-weight="500">File size</text>
-<text x="28" y="119" fill="#c3c2b7" font-size="11">kB, sum of the group, lower is better</text>
+<text x="28" y="119" fill="#c3c2b7" font-size="11">sum of the group, lower is better</text>
 <text x="146" y="144" text-anchor="end" fill="#f0efec" font-weight="500">pngmint</text>
 <rect x="156" y="132" width="125.5" height="16" rx="3" fill="#3987e5"/>
 <text x="289.5" y="144" fill="#f0efec" font-size="12">9.6 MB</text>
@@ -41,7 +41,7 @@
 <circle cx="223.0" cy="343" r="6" fill="#75746e" stroke="#1a1a19" stroke-width="2"/>
 <text x="234.0" y="347" fill="#c3c2b7" font-size="12">36.34 dB</text>
 <text x="28" y="384" fill="#f0efec" font-weight="500">Time</text>
-<text x="28" y="399" fill="#c3c2b7" font-size="11">ms, sum of the group, lower is better</text>
+<text x="28" y="399" fill="#c3c2b7" font-size="11">sum of the group, lower is better</text>
 <text x="146" y="424" text-anchor="end" fill="#f0efec" font-weight="500">pngmint</text>
 <rect x="156" y="412" width="13.2" height="16" rx="3" fill="#3987e5"/>
 <text x="177.2" y="424" fill="#f0efec" font-size="12">3623 ms</text>
@@ -56,7 +56,7 @@
 <text x="192.9" y="493" fill="#c3c2b7" font-size="12">7927 ms</text>
 <text x="400" y="78" font-weight="500" fill="#f0efec">Graphics, 9 images (screenshots, illustrations, logos)</text>
 <text x="400" y="104" fill="#f0efec" font-weight="500">File size</text>
-<text x="400" y="119" fill="#c3c2b7" font-size="11">kB, sum of the group, lower is better</text>
+<text x="400" y="119" fill="#c3c2b7" font-size="11">sum of the group, lower is better</text>
 <text x="518" y="144" text-anchor="end" fill="#f0efec" font-weight="500">pngmint</text>
 <rect x="528" y="132" width="136.3" height="16" rx="3" fill="#3987e5"/>
 <text x="672.3" y="144" fill="#f0efec" font-size="12">2.0 MB</text>
@@ -92,7 +92,7 @@
 <circle cx="633.3" cy="343" r="6" fill="#75746e" stroke="#1a1a19" stroke-width="2"/>
 <text x="644.3" y="347" fill="#c3c2b7" font-size="12">55.42 dB</text>
 <text x="400" y="384" fill="#f0efec" font-weight="500">Time</text>
-<text x="400" y="399" fill="#c3c2b7" font-size="11">ms, sum of the group, lower is better</text>
+<text x="400" y="399" fill="#c3c2b7" font-size="11">sum of the group, lower is better</text>
 <text x="518" y="424" text-anchor="end" fill="#f0efec" font-weight="500">pngmint</text>
 <rect x="528" y="412" width="4.7" height="16" rx="3" fill="#3987e5"/>
 <text x="540.7" y="424" fill="#f0efec" font-size="12">1191 ms</text>

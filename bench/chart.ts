@@ -96,7 +96,7 @@ interface Metric {
 const METRICS: Metric[] = [
   {
     title: 'File size',
-    note: 'kB, sum of the group, lower is better',
+    note: 'sum of the group, lower is better',
     value: (r) => r.kb,
     fmt: (v) => (v >= 1000 ? `${(v / 1024).toFixed(1)} MB` : `${v.toFixed(0)} kB`),
     kind: 'bar',
@@ -110,7 +110,7 @@ const METRICS: Metric[] = [
   },
   {
     title: 'Time',
-    note: 'ms, sum of the group, lower is better',
+    note: 'sum of the group, lower is better',
     value: (r) => r.ms,
     fmt: (v) => (v >= 10000 ? `${(v / 1000).toFixed(1)} s` : `${v.toFixed(0)} ms`),
     kind: 'bar',
