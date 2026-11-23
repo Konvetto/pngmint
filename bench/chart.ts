@@ -18,7 +18,7 @@ const COLORS = 256;
 const DISPLAY: Record<string, string> = {
   'upng-js': 'UPNG.js',
   'image-q': 'image-q',
-  libimagequant: 'libimagequant (wasm)',
+  libimagequant: 'libimagequant',
 };
 
 interface Row {
@@ -81,7 +81,8 @@ const THEMES: Record<'light' | 'dark', Theme> = {
 const W = 760;
 const H = 548;
 const FONT = 'system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif';
-const COL = { x: [28, 400], names: 128, bars: 150 };
+// Names start at the column's left edge, like the headings; bars start after the longest name.
+const COL = { x: [28, 400], names: 104, bars: 170 };
 const BAR = 16;
 const STEP = 23;
 
@@ -172,7 +173,7 @@ function svg(rows: Row[], t: Theme): string {
         const v = m.value(r);
         const color = ours ? t.ours : t.other;
         out.push(
-          `<text x="${bx - 10}" y="${cy + 4}" text-anchor="end" fill="${ours ? t.text : t.muted}" font-weight="${ours ? 500 : 400}">${esc(DISPLAY[r.library] ?? r.library)}</text>`,
+          `<text x="${x}" y="${cy + 4}" fill="${ours ? t.text : t.muted}" font-weight="${ours ? 500 : 400}">${esc(DISPLAY[r.library] ?? r.library)}</text>`,
         );
         if (m.kind === 'bar') {
           const wBar = Math.max(2, scale(v) - bx);
@@ -193,7 +194,7 @@ function svg(rows: Row[], t: Theme): string {
   });
   out.push(
     `<text x="${COL.x[0]}" y="${H - 32}" fill="${t.muted}" font-size="11">Graphics PSNR is the mean over the 7 images every library encodes with a loss; 2 are lossless for ${NAME}.</text>`,
-    `<text x="${COL.x[0]}" y="${H - 16}" fill="${t.muted}" font-size="11">Below 128 colors UPNG.js writes smaller photo files than ${NAME}, without dithering. Full tables: bench/results.md.</text>`,
+    `<text x="${COL.x[0]}" y="${H - 16}" fill="${t.muted}" font-size="11">Below 128 colors UPNG.js writes smaller photo files than ${NAME}, without dithering. libimagequant runs as wasm. Full tables: bench/results.md.</text>`,
     '</svg>',
     '',
   );
